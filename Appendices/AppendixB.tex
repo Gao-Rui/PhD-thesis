@@ -1,0 +1,116 @@
+% Appendix B
+
+\chapter{Receiver Operating Characteristic (ROC) Curves}
+\label{AppendixB} \lhead{Appendix B. \emph{Receiver Operating
+Characteristic (ROC) Curves}}
+
+Receiver Operating Characteristic (ROC) curves were developed in the
+1950's where it was used for signal detection in radio signals
+contaminated by noise. It is a technique used generally for
+organizing classifiers and visualization of their performance. Other
+application of ROC curves include medical decision making, machine
+learning and data mining.
+
+In this research project, the ROC technique is used as a 2 class
+classifier (Target present and Target absent).Given a classifier (
+actual class) and instance (measured data), there are 4 possible
+outcomes. If an instance detects a target and the target is
+physically present, it is considered as a \emph{true positive}; if
+the target is physically absent, it is considered as a \emph{false
+positive}. If an instance doesn't detect a target and the target is
+physically absent, it is considered a \emph{true negative}; if the
+target is physically present, it is considered a \emph{false
+negative}. Given the set of classifiers and instances, a two-by-two
+confusion matrix (contingency table) can be created.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1.0\textwidth]{./Figures/ConfusionMatrix.jpg}
+\caption[Confusion Matrix ]{Confusion Matrix}
+\label{fig:ConfusionMatrix}
+\end{figure}
+
+The following information can be obtained from the confusion matrix:
+
+True Positive (TP) - Correct detection
+
+True Negative (TN) - Correct rejection
+
+False Positive (FP) - False alarm
+
+False Negative (FN) - Miss
+
+Sensitivity or True Positive Rate (TPR) - Correction detection rate
+\begin{equation}\label{eq:TPR}
+TPR = \frac{TP}{P} = \frac{TP}{TP+FN}
+\end{equation}
+
+False Positive Rate (FPR) - False alarm rate
+\begin{equation}\label{eq:FPR}
+FPR = \frac{FP}{N} = \frac{FP}{Fp+TN}
+\end{equation}
+
+Specificity or True Negative Rate (TNR)
+\begin{equation}\label{eq:Specificity}
+Specificity= 1 - FPR
+\end{equation}
+
+The ROC curve is a plot of True Positive Rate (y-axis) against False
+Positive Rate (x-axis) over a range of detection thresholds. In
+signal detection theory, an ideal receiver in the absence of
+interference will have a TPR of 1 and a FPR of 0 for the entire
+detection threshold range. However in practical situations this is
+not possible. A good detector aims to maximize the TPR while
+minimizing the FPR. The diagonal line joining the points (0,0) and
+(1,1) is called the diagonal of uncertainty where it means that the
+outcome is a random guess.
+
+To compare the performance between ROC curves, one needs to apply a
+measure of variance to each curve and see if they are significantly
+different from one another. The measure of variance can be achieved
+by averaging the curve over multiple data sets for each signal
+processing method adopted. There are many methods for averaging ROC
+curves. The most basic methods include vertical and threshold
+averaging.
+
+In vertical averaging, vertical samples of the ROC curves are taken
+at fixed intervals of FPR and the corresponding TPR are averaged.
+However, this method gives only a one dimensional measure of
+variance. Moreover, the FPR is not an independent variable that is
+under direct control of the experiment controller. A preferred
+method is to average ROC points with independent variables whose
+values can be controlled directly. The threshold method overcomes
+this limitation.
+
+The Area Under Curve (AUC) method is sometimes used to compare
+classifier performance. This method reduces the two dimensional ROC
+space into a single scalar value giving a measure of expected
+performance. The AUC, as its name depicts, is found by calculating
+the area under the ROC curve. The AUC is used when one wishes to
+evaluate performance over the entire range of detection probability,
+and this is useful since two ROC curves may have different
+curvatures but yet have the same AUC. In this research project
+however, the interest is in the detection performance  at specific
+FPR rather than overall performance. Hence, the threshold averaging
+method is more suitable.
+
+For each simulation in this research, 50 sets of 100 bubble cloud
+backscatter responses were generated to obtain 50 waterfall plots
+and 50 ROC curves for each of the processing method discussed. Each
+point on the ROC curve is plotted by varying the detection threshold
+and finding the percentage of correct detections and false alarms.
+Correct detection (TP) is measured from the waterfall plot (target
+present) by finding the number of pings in the time samples occupied
+by the target that have an amplitude higher than the specified
+detection threshold. A false alarm (FP) is measured from the
+waterfall plot (target absent) by finding the number of pings in the
+entire time duration that have an amplitude higher than the
+detection threshold. The FPR and TPR is then calculated using Eq.
+\ref{eq:FPR} and \ref{eq:TPR} respectively.
+
+Each of the ROC curves presented in this research thesis was found
+by averaging over 50 ROC curves. The 95 \% confidence interval for a
+FPR of 0.1 and its corresponding 95 \% confidence interval for TPR
+was plotted. Any overlap in the confidence interval of the ROC curve
+for the different signal processing techniques would indicate that
+one technique is not significantly better than any of the others.
