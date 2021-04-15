@@ -1,0 +1,261 @@
+ %% ----------------------------------------------------------------
+%% Thesis.tex -- MAIN FILE
+%% Gao Rui
+%% work on AUV positioning
+%% ----------------------------------------------------------------
+
+\documentclass[a4paper, 12pt, oneside]{Thesis}
+
+% Include any extra LaTeX packages required
+%\usepackage[inner=2.5inch,outer=1.5inch,bottom=1inch]{geometry}
+\usepackage{setspace}
+\doublespacing
+\usepackage[square, numbers, comma, sort&compress]{natbib}  % Use the "Natbib" style for the references in the Bibliography
+\usepackage{verbatim}       % Needed for the "comment" environment to make LaTeX comments
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{vector}
+\usepackage{amsmath}
+ {
+      \theoremstyle{plain}
+      \newtheorem{assumption}{Assumption}
+  }
+\usepackage{subfigure}
+\usepackage{setspace}
+\usepackage{graphics}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tikz} % PGF
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{subfigure}
+\usepackage{algorithm2e}
+\usepackage{algorithm}
+\usepackage[utf8]{inputenc}
+%\usepackage[ngerman, english]{babel}
+\usepackage{csquotes}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\newcommand{\cbox}[2][yellow]{%
+  \colorbox{#1}{\parbox{\dimexpr\linewidth-2\fboxsep}{\strut #2\strut}}%
+}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+\graphicspath{{./Figures/}}       % (set up for graphics to be in PDF format)
+
+\hypersetup{linkcolor=black, colorlinks=true, citecolor = black} % Colours hyperlinks in blue, but this can be distracting if there are many links.
+\urlstyle{same}
+%\hyphenation{STARFISH AUVs}
+
+\pagestyle{plain}
+%% ----------------------------------------------------------------
+\begin{document}
+
+
+\frontmatter        % Begin Roman style (i, ii, iii, iv...) page numbering
+
+\title      {COOPERATIVE LOCALIZATION AND BATHYMETRY-AIDED NAVIGATION OF AUTONOMOUS MARINE SYSTEMS }\\
+%% FINAL 
+
+\authors    {GAO RUI}
+
+\maketitle
+
+    \chapter*{\centering Declaration}
+\addcontentsline{toc}{chapter}{Declaration}
+\begin{center}
+
+I hereby declare that this thesis is my original work and it has been written by me in its entirety. I have duly acknowledged all the sources of information which have been used in the thesis.
+
+This thesis has also not been submitted for any degree in any university previously.
+
+
+\vspace{20mm}  % vertical space
+
+\rule{40mm}{.15mm}\par   % horizontal space, line, start new line
+ Gao Rui\par
+\today
+\end{center}
+
+
+\clearpage
+\lhead{\emph{Acknowledgements}} 
+\acknowledgements{
+\addtocontents{toc}{\vspace{1em}}       % Add a gap in the Contents, for aesthetics
+This dissertation would not be possible without the assistance of many people. I am very fortunate to be associated with them and would like to take this opportunity to express my gratefulness and appreciation to them in this acknowledgement.
+
+First and foremost, I would like to thank my supervisor Assoc.~Prof.~Mandar~Chitre who introduced me to underwater navigation. He not only provided the patient guidance and valuable suggestions but more importantly supported and encouraged me throughout the course. He has my utmost respect and gratitude for understanding and believing in me, especially when I was overwhelmed with my family commitment. 
+
+This dissertation was built on the project - STARFISH AUV\footnote{Small Team of Autonomous Robotic ``Fish'' (STARFISH)} at ARL\footnote{Acoustic Research Laboratory (ARL), Tropical Marine Science Institute (TMSI), National University of Singapore (NUS) - \url{http://www.arl.nus.edu.sg}}, NUS. I would like to extend my gratitude to my colleagues and friends at ARL. I am grateful for the opportunity for working with and being surrounded by great people. I am honored to be part of an outstanding team. Thanks go to Ms.~Ong~Lee~Lin for her help and guidance in my research writing.
+
+Last but not least, I want to thank my husband, Chew~Jee~Loong, and my loving parents. This journey would not have been possible without their understanding and support. My deepest gratitude goes to my dear mother for her unconditional love, encourage, and all the sacrifices she has made for me. I shall also mention my two kids, Amelie and Andrew, who always make my day full of joy and happiness.
+}
+\lhead{\emph{Acknowledgements}} 
+\clearpage      % End of the Acknowledgements
+%% ----------------------------------------------------------------
+\pagestyle{fancy}       %The page style headers have been "empty" all this time, now use the "fancy" headers as defined before to bring them back
+
+
+%% ----------------------------------------------------------------
+\setcounter{tocdepth}{2}
+\lhead{\emph{Contents}}     % Set the left side page header to "Contents"
+\tableofcontents        % Write out the Table of Contents
+
+% -------------------------The Abstract Page-------------------------
+\addtotoc{Summary}     % Add the "Abstract" page entry to the Contents
+\lhead{\emph{Summary}} 
+\abstract{
+\addtocontents{toc}{\vspace{1em}}       % Add a gap in the Contents, for aesthetics
+
+In monitoring and surveillance, localization and navigation is especially important for underwater autonomous vehicles (AUVs) since GPS and radio signals are not accessible in most of the missions. A cooperative team formed by multiple autonomous vehicles has gained increasing interests as it offers more efficiency and reliability than a single vehicle. Much work has been done in the area of underwater localization and navigation with the aids from beacons with known positions. This dissertation focuses on a team of low-cost AUVs where no one has precise position. With the ability to communicate and make relative measurements from each other, vehicles share information across the team and cooperate to complete complex missions. The information shared among vehicles helps improve the overall performance. However, unlike terrestrial communication links, underwater acoustic channel has inherent constraints such as high latency, limited bandwidth and low reliability. In such a case, a distributed processing architecture with minimum inter-vehicle communications is preferred. At the same time, the severe underwater communication issues also impose challenges on the distributed processing. We show the benefit introduced through cooperation and the issue imposed by communication constraints on the distributed processing. We propose a feasible design of the distributed localization for a team of cooperative AUVs. The algorithm is robust to packet loss, outperforms single-vehicle localization and requires minimum communications. 
+
+In the next step, we look at a simplified \textit{na\"ive} assumption in underwater multi-sensor tracking and multi-vehicle localization. This assumption \textit{na\"ively} assumes information from different sources are independent of each other. We justify the assumption and answer when the assumption is good to use. With the justification, we move on to single-vehicle bathymetry-aided navigation as it can be safely extended to cooperative multi-vehicle navigation with bathymetric aids. 
+
+Bathymetry map indicating the water depth offers an attractive tool to reduce the localization error of the submerged vehicles. With bathymetric measurements incorporated, we study the \textit{a posteriori} description of the localization uncertainty using probabilistic methods. An information theoretical approach is used to describe the localization uncertainty. With this information theory measure, we build information entropy map and demonstrate how the bathymetry helps with different localization priors. Subsequently, a bathymetry-aided navigation is proposed to ensure a good localization at the destination. We formulate the path planning and solve it as an optimization problem. The algorithm is tested using real-world bathymetric data. Simulations show that near-optimal paths with good localization accuracy at the destination are generated within a few iterations.
+
+\clearpage      % Abstract ended, start a new page
+% ------------------------------------------------------
+\lhead{\emph{List of Tables}}       % Set the left side page header to "List of Tables"
+\listoftables       % Write out the List of Tables
+
+% --------------------------------------------------
+\lhead{\emph{List of Figures}}      % Set the left side page header to "List if Figures"
+\listoffigures      % Write out the List of Figures
+
+%% ----------------------Symbols---------------------------
+\clearpage      %Start a new page
+\lhead{\emph{List of Symbols}}      % Set the left side page header to "Symbols"
+\listofnomenclature{ll}        % Include a list of Symbols (a three column table)
+{
+ $k$ & time step $k$, used as subscript for other symbols \\
+${\bf x}_k$ & position state at time step $k$ \\
+${\bf a}_k$ & action directing vehicle movement at time step $k$ \\
+${\bf F}$ & Jacobian matrix of evolution model \\
+${\bf H}$ & Jacobian matrix of measurement model \\
+${\bf B}_k$ & control matrix at time step $k$\\
+${\bf u}_k$ & control input at time step $k$\\
+${\bf z}_k$ & measurement or observation at time step $k$ \\
+${\bf Z}_{1:k}$ & series of measurements from time step 1 to $k$ \\
+$r_k$ & range measurement at time step $k$ \\
+${\bf\omega}_k$ & system evolution noise \\
+${\bf Q}_k$ & covariance of system evolution noise \\
+${\bf\nu}_k$ & measurement noise \\
+${\bf\upsilon}_k$ & range measurement noise \\
+${\bf R}$ & covariance of measurement noise \\
+${\bf R}_r$ & covariance of ranging error \\
+${\bf\hat x}_k,{\bf y}_k$ & position estimate of true position state ${\bf x}_k$ \\
+${\bf P}_k$ & error covariance of the position estimate\\
+$\delta T$ & measurement update interval \\
+$p_L$ & communication packet loss rate\\
+$N_p$ & number of past updates \\
+${{\Lambda}}_k$ & precision matrix or information matrix\\
+${\bf \eta}_k$ & information vector \\
+${\bf O}_{\bf x}$ & State mapping matrix \\ 
+${\bf O}_{\bf y}$ & Observation mapping matrix\\ 
+ ${\bf E}$ & Error matrix\\
+}
+
+%% ----------------------------------------------------------------
+%\setstretch{1.5}        % Set the line spacing to 1.5, this makes the following tables easier to read
+\clearpage      % Start a new page
+
+%% ----------------Abbreviations---------------------------
+\lhead{\emph{Acronyms}}        % Set the left side page header to "Abbreviations"
+\listofsymbols{ll}      % Include a list of Abbreviations (a table of two columns)
+{
+\textbf{AUV} & \textbf{A}utonomous \textbf{U}nderwater \textbf{V}ehicle \\
+\textbf{BAN} & \textbf{B}athymetry \textbf{A}ided \texbf{N}avigation \\
+\textbf{CKF} & \textbf{C}entralized \textbf{K}alman \textbf{F}ilter \\
+\textbf{DF} & \textbf{D}istributed \textbf{F}ilter \\
+\textbf{DoF} & \textbf{D}egree-\textbf{o}f-\textbf{F}reedom \\
+\textbf{DR} & \textbf{D}ead \textbf{R}eckoning \\
+\textbf{DVL} & \textbf{D}oppler \textbf{V}elocity \textbf{L}og \\
+\textbf{EKF} & \textbf{E}xtended \textbf{K}alman \textbf{F}ilter \\
+\textbf{EIF} & \textbf{E}xtended \textbf{I}nformation \textbf{F}ilter \\
+\textbf{GIB} & \textbf{G}PS \textbf{I}ntelligent \textbf{B}uoys\\
+\textbf{GMM} & \textbf{G}aussian \textbf{M}ixture \textbf{M}odel \\
+\textbf{INS} & \textbf{I}ntertial \textbf{N}avigation \textbf{S}ystem \\
+\textbf{KF} & \textbf{K}alman \textbf{F}ilter \\
+\textbf{LBL} & \textbf{L}ong \textbf{B}ase \textbf{L}ine\\
+\textbf{MAP} & \textbf{M}aximum \textbf{A} \textbf{P}osteriori \\
+\textbf{ML} & \textbf{M}aximum \textbf{L}ikelihood \\
+\textbf{NEES} & \textbf{N}ormalized \textbf{E}stimation \textbf{E}rror \textbf{S}qaured \\
+\textbf{NKF} & \textit{\textbf{N}a\"ive} \textbf{K}alman \textbf{F}ilter \\
+\textbf{PDF} & \textbf{P}robabilistic \textbf{D}ensity \textbf{F}unction \\
+\textbf{PF} & \textbf{P}article \textbf{F}ilter \\
+\textbf{PV} & \textbf{P}eer \textbf{V}ehicle \\
+\textbf{RMSE} & \textbf{R}oot \textbf{M}ean \textbf{S}quare \textbf{E}rror \\
+\textbf{RV} &　\textbf{R}eceiving \textbf{V}ehicle \\
+\textbf{(U)SBL} & (\textbf{U}ltra) \textbf{S}hort \textbf{B}ase \textbf{L}ine\\
+\textbf{SCI} & \textbf{S}plit \textbf{C}ovariance \textbf{I}ntersection \\
+\textbf{SI} & \textbf{S}warm \textbf{I}ntelligence \\
+\textbf{SPP} & \textbf{S}elf-\textbf{P}ropelled \textbf{P}articles \\
+\textbf{SVF} & \textbf{S}tate \textbf{V}ector \textbf{F}usion \\
+}
+
+%%% -------------------Physical Constants----------------------------
+%\clearpage      % Start a new page
+%\lhead{\emph{Physical Constants}}       % Set the left side page header to "Physical Constants"
+%\listofconstants{lrcl}      % Include a list of Physical Constants (a four column table)
+%{
+% Constant Name & Symbol & = & Constant Value (with units) \\
+%Speed of Sound in Seawater & $c$ & $=$ & 1540\ m s$^{-1}$ \\
+%}
+
+
+
+
+%% ----------------------------------------------------------------
+% End of the pre-able, contents and lists of things
+% Begin the Dedication page
+
+\setstretch{1.3}        % Return the line spacing back to 1.3
+
+
+%% ----------------------------------------------------------------
+\mainmatter     % Begin normal, numeric (1,2,3...) page numbering
+\pagestyle{fancy}       % Return the page headers back to the "fancy" style
+
+% Include the chapters of the thesis, as separate files
+% Just uncomment the lines as you write the chapters
+\setstretch{2}        % Return the line spacing back to 1.3
+
+\input{./Chapters/introduction} % 1.Introduction
+\input{./Chapters/background} % 2.Background Related Work
+\input{./Chapters/distributed} % 3. localization and distribution
+\input{./Chapters/naive}
+\input{./Chapters/bathymetry} % 4. Bathy-aided localization
+\input{./Chapters/BAN} % 5. BAN path planning
+\input{./Chapters/conclusion} % 6.Conclusion
+
+\setstretch{1.3}        % Return the line spacing back to 1.3
+
+%% ----------------------------------------------------------------
+% Now begin the Appendices, including them as separate files
+
+\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
+
+%S\appendix   % Cue to tell LaTeX that the following 'chapters' are Appendices
+
+%\input{./Appendices/AppendixA}  % Appendix Title
+
+%\input{./Appendices/AppendixB} % Appendix Title
+
+\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
+\backmatter
+
+%% ----------------------------------------------------------------
+\label{Bibliography}
+\lhead{\emph{Bibliography}}     % Change the left side page header to "Bibliography"
+\bibliographystyle{IEEEtranS}        % Use the "unsrtnat" BibTeX style for formatting the Bibliography
+\bibliography{Bibliography}     % The references (bibliography) information are stored in the file named "Bibliography.bib"
+
+\end{document}      % The End
+%% ----------------------------------------------------------------
