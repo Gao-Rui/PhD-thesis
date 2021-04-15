@@ -1,0 +1,119 @@
+\chapter{Distributed Localization in a Cooperative Team}
+\label{ch:distributed}
+\lhead{Chapter~\ref{ch:distributed}. \emph{Distributed Localization in a Cooperative Team}}
+
+
+\subsection{Decentralization with Communication Issues}
+EKF de-centralization/assumptions and simulations from RA1 (Centralize vs decetralized)
+divergence and estimation failure can happen and how to avoid
+\subsection{Reviewing existing method BC inflation/LE/CI/IEA, and leads to directioinal BC}
+Parameterized Joint Probability densitiies? Parameterized correlation from ranging?
+
+Study of consistency of dBC inflation and experimental data (Progress report Sept 2015)
+\subsection{Loopy BP and asympototic performance study}
+\begin{itemize}
+\item studies on factor graph, sum-product algorithm , loopy belief propagation etc.
+\item problem of information double counting using theory of markove random field and loopy belief propagation
+   \item information flow in partially connected network
+\item Turbo decoder etc for iterative decoding algorithm
+\item multi-sensor tracking toy problem
+\item multi-state cooperative probelm (toy problem), filters and explanation (Mathematica report)
+\item URAI 2017 papaer content
+\end{itemize}
+
+
+\subsection{distributed Extended Information Filter }
+Split information filter, not successful but it leads to Extended Information Filter for distributed localization
+The goal of general cooperative localization is to estimate the position of vehicles within the network, given local information and external information via onboard sensors and inter-vehicle measurements.
+\section{Recursive State Estimation}
+\subsection{State Representation and Models}
+\textit{(Dieter Fox Thesis Chapter 1 for Markov localization, and \cite{Alspach1972}. Derive the general equation, and deviation with assumptions. Will be used the subsequent methods.)}
+
+In localization problem, the vehicle state usually consists of the vehicle's location (for example, the Northing-Easting position), depth or altitude, orientation (heading, pitch and roll), speed, as applicable. Autonomous vehicle estimates its own state in real time, and at the same uses the estimated state for further action.
+
+Let ${\bf x}_k$ be the state vector to be estimated at time step $k$ where ${\bf x}_k\in\mathbb{R}^n$, its estimation is hence denoted as ${\bf \hat x}_k$.  The general system evolution is modeled as
+\begin{equation}
+\label{eq:propagation}
+{\bf x}_{k+1}=f_{k+1}({\bf x}_k,{\bf\omega}_k)
+\end{equation}
+The behavior of the system is observed through measurement ${\bf z}_k\in\mathbb{R}^m$. The measurement model is
+\begin{equation}
+\label{eq:measurement}
+{\bf z}_k=h_k({\bf x}_x,{\bf\nu}_k)
+\end{equation}
+The process noise ${\bf\omega}_k$ and measurement noise ${\bf\nu}_k$ are Gaussian white-noise sequences and are mutually independent.
+
+Markov assumption states that...
+
+\subsection{Localization Algorithm}
+\subsubsection{Bayesian Localization}
+Knowledge of the probability density function of the state conditioned on all available measurement data ${\bf z}_{1:k}\triangleq\{{\bf z}_1,{\bf z}_2,...,{\bf z}_k\}$ provides the most complete possible description of the state. Given \textit{a posteriori} density function $p({\bf x}_k|{\bf z}_{1:k})$, estimate of the state is obtained from some performance criteria, for example, maximum \textit{a posteriori} (MAP). Bayesian estimation \cite{Aoki1967} recursively determines the a posteriori density $p({\bf x}_k|{\bf z}_{1:k})$ as
+\begin{align}
+\begin{split}
+p({\bf x}_k|{\bf z}_{1:k})&=\frac{p({\bf z}_{k}|{\bf x}_k)p({\bf x}_k|{\bf z}_{1:k-1})}{p({\bf z}_k|{\bf z}_{1:k})} \\
+&=\alpha p({\bf z}_{k}|{\bf x}_k)p({\bf x}_k|{\bf z}_{1:k-1}) \\
+\end{split}
+\end{align}
+where
+\begin{align}
+\begin{split}
+\frac{1}{\alpha}&\triangleq p({\bf z}_k|{\bf z}_{1:k}) \\
+&=\int p({\bf z}_{k}|{\bf x}_k)p({\bf x}_k|{\bf z}_{1:k-1})\mathrm{d}{\bf x}_{k}
+\end{split}
+\end{align} % wiki recursive bayesian estimation
+The density $p({\bf z}_{k}|{\bf x}_k$ is the \textit{a priori} distribution.
+\subsubsection{Kalman Filter and Extensions}
+When both evolution and measurement models are linear, and the the \textit{a priori} distribution is Gaussian, Kalman filter derives the closed-form solution by simply using the mean and covariances for this system.
+\subsection{Collective Localization and Recursive State Estimation}
+R2 (Swarm intelligence) 
+How does cooperation helps
+\subsection{Decentralization with Communication Issues}
+\subsection{Estimation Criterion}
+\subsubsection{Maintaining Consistency and Non-divergence}
+\subsubsection{Efficiency - Cramer-Rao Lower Bound and/or Optimality Test}
+\subsubsection{Observability}
+
+\section{Decentralization in Collective Localization}
+In a group of autonomous vehicles, it is not practical that each individual keeps estimation of the state of the whole group. We are considering the problem that vehicles only keeps the state estimate of its own.
+
+Communication and cooperation improves the estimates. Meanwhile, it brings correlation or dependency among the team.
+
+Centralized extended Kalman filter (CEKF) is a post-process solution that assumes access to all sensor measurements from all members. It tracks the full error covariance matrix of the team, gives the optimal estimation and therefore serves as a baseline for comparison.
+
+A naive extended Kalman filter (NEKF) does not track the correlation among vehicles; they are always assumed to be independent to one another. This results in a double-counting of information as one vehicle's state may have been used previously. Inconsistent estimate appears where vehicles are overconfident about its own positioning. In this case, less information will be gained from some accurate and important measurements.
+Suboptimal estimation with unknown correlation
+\subsection{State Fusion and Sensor Fusion}
+\textit{Turbo decoder and belief propagation are also separating the intrinsic and extrinsic information using the same idea. \cite{Gupta2005}}
+
+Although the cooperation is made through some measurements between vehicles (for example, ranging, relative bearing etc), it is actually a state fusion. This can be understood by assuming perfect measurement between vehicles. Sensor fusion cannot be used in decentralized cooperative team.
+
+Sensor fusion is used when multiple sensors cooperate to achieve an optimal estimation on a common process. \cite{Gupta2005} identifies the information that should be communication between two sensor nodes, and achieves optimal estimation from this sensor fusion in presence of packet loss in the communication channel. The diagram is as follows.
+
+\textit{diagram}
+
+As the noise in sensor data (measurements) are independent of each other and stationary, they are identified and fused with the common process. On the contrary, state fusion requires the knowledge of correlation between states, which is usually imprecisely known. It could be from a relative measurement some time ago; it could be also from the cooperation with some other vehicle some other time ago.
+
+\textit{diagram}
+
+The vehicle team is cooperative but decentralized. This means that
+\begin{itemize}
+  \item Only the pre-planned missions are known to each vehicle. The actual paths and activities changes with respect to the situation.
+  \item Each vehicle is only aware of its own navigation and sensors. It does not know the state and decision of others, unless notified.
+  \item Each time the cooperation happens in pair. It is highly possible that other vehicles are not aware of the cooperation and communication, unless notified.
+  \item Hence each vehicle can only take note of the cooperation and communication with others.
+  \item ...
+\end{itemize}
+
+\subsection{Cooperative Localization Performance}
+\subsubsection{Performance Boundaries}
+\subsubsection{Existing Approaches}
+
+\subsection{Directional Bounded Covariance Inflation}
+
+\section{Distributed Extended Information Filter}
+
+{\bf{GR note}}: AUV16 paper: Cooperative multi-AUV localization using distributed extended information filter
+
+\subsection{Formulation and Design}
+\subsection{Illustrative Examples}
+\subsection{Simulation Studies Using Field Experiment Data} 

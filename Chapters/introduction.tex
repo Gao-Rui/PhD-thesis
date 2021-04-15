@@ -1,0 +1,67 @@
+% Chapter 1
+
+\chapter{Introduction}
+\label{ch:introduction}
+\lhead{Chapter~\ref{ch:introduction}. \emph{Introduction}}
+
+\section{Motivation}
+\label{sec:Motivation}
+
+The past decade has seen a significant increase in interest in the use of autonomous underwater vehicles (AUVs) for maritime operations. AUVs reach shallower water than boats, and greater depths than human divers or tethered vehicles. Once deployed and submerged, AUVs are safe from bad weather and heavy traffic on the surface. Extensive research has been conducted on AUVs and several commercial AUVs have been developed and tested \cite{Kojima1997,Hagen2006,Byron2007}. One of the challenges that all AUVs have to contend with is that of underwater localization and navigation, since GPS signals cannot be received underwater. For missions such as mapping, target identification, sensing and surveying, underwater localization and navigation are the key components that determine the performance of an autonomous mission. 
+
+Traditionally an AUV localizes itself using the vehicle's own sensor data, such as GPS (whenever available), compass and depth sensor. In order to obtain good localization, AUVs are often equipped with high-end navigation systems such as Doppler velocity log (DVL) and inertial navigation system (INS). Packed together with other sensors for the mission (for example, sensors for monitoring and surveying), AUVs become bulky in size and high in cost. Another way to achieve the vehicle's localization accuracy is to utilize the communication with beacons with known positions. The distance from AUV to a beacon can be measured by the time-of-flight (TOF) of the acoustic signals. The relative orientation of the AUV can be computed from a set of equations consisting of distances to all available beacons \cite{Zhou} or the phase shift measured from the beacon array \cite{Marin2018}. Long Baseline (LBL) uses a sea-floor baseline transponder network as navigation reference. It gives very high positioning accuracy and position stability, but incurs high effort and cost to deploy and support this substantial infrastructure. Other techniques such as Short Baseline (SBL), Ultra Short Baseline (USBL) \cite{milne1983} and GPS Intelligent Buoys (GIB) \cite{Alcocer2006} are placed on sea surface. Localization with these setups can only be achieved in certain restricted and designated areas due to the installation of these external beacons. Some systems also assist the localization and navigation with moving beacons such as those mounted on surface vessels \cite{Webster2013,AlexPhillips2018,Giovanni2018} or even other AUVs \cite{Gao2010}. The operation of additional surface vessels is not trivial; the horizontal coverage is also limited. The positions of beacon AUVs need to be calibrated precisely. 
+
+In these respects, AUVs which are able to navigate without aids from external setups or beacons and yet still maintain good localization with the use of low-grade sensors, are preferred. This has motivated multi-vehicle localization and navigation \cite{Martins2003,Busquets2012,Gao2010}, and the use of bathymetric aids. 
+
+Multi-vehicle operation offers robustness to single-vehicle failure and reduces the overall time and cost of acquiring data over large areas. We focus on a team of low-cost AUVs where no single AUV functions as a beacon possessing accurate position. The team is able to outperform single-vehicle operation, through sharing information among the team members. However, as compared to terrestrial communication links, underwater communication links typically are encumbered by limited bandwidth, high latency and significant packet loss. It is impractical for a team of AUVs to collate all sensor data centrally, and therefore a decentralized processing architecture is preferred. However this opens up new challenges to team members working in cooperation.
+
+The first challenge lies in the limited communication bandwidth. As mentioned, the multi-vehicle localization problem consists of a team of vehicles cooperating and estimating their own positions. If the local sensor data are accessible to a central processing unit, a central filtering yields the optimal estimation on all vehicle positions. However, with limited bandwidth, the size of underwater transmission packets is constrained. The information shared between members is usually processed estimates rather than the raw sensor data. A distributed filtering where members only process their local sensor data and information communicated from others is commonly used. An empirical study~\cite{William2015Journal} showed that the available bandwidth in underwater communication severely limits the performance of cooperative localization.
+
+The second challenge pertains to tracking of the inter-vehicle correlation. In the presence of unstable, irregular and lossy channels, the information exchange between two vehicles may not be known to other members in the team. Therefore the inter-vehicle correlation tends to be underestimated. A common practice is to \textit{na\"ively} assume independence during information fusion between cooperative members. This assumption is not always good. Overconfidence in estimation has been reported as a result of double counting the common information \cite{Julier2001book}. This overconfidence prevents utilization of subsequent useful measurements. To prevent information double counting, author in \cite{BahrThesis} selectively incorporated information and avoided the fusion of correlated data while keeping the positions of all vehicles decorrelated. Other works assumed maximum correlation in the whole state~\cite{Uhlmann2003,Benaskeur2002,Yan2008} or separated states~\cite{LiHao2013B}. These methods are conservative in handling the unknown inter-vehicle correlation, and typically yield pessimistic estimates as the independent information is not fully utilized. Based on the way that vehicles cooperate, a less conservative distributed localization could be designed to record the correlated terms and require minimum communications. Meanwhile, the \textit{na\"ive} assumption which simply ignores the correlation, has been used as a common practice as it imposes minimum requirements on the processing and communication. One would be interested to know how information double counting happens and when the correlation in fusion can be ignored. The dangerous and safe regions of \textit{na\"ive} filtering should be quantified.
+
+Incorporating information sensed from the natural environment helps improve the localization without the need to establish extra physical infrastructure. Bathymetry map indicating the water depth offers an attractive tool to reduce the localization error of the submerged vehicles. Reference \cite{William2015Journal} presents a cooperative bathymetry-based localization approach for a team of low-cost AUVs. It presents empirical analysis on the factors that affect the filter performance. However, vehicle estimates are assumed to be independent of each other as the author claims that the effect of correlation is alleviated with bathymetry measurements. The amount of common information fed back through the cooperation in the team is not addressed. In our work, we justify this assumption through a careful analysis of the effect of bathymetry aids in navigation. The advantage of bathymetric aids is path dependent. It makes sense if vehicles are able to plan a path such that a good localization can be ensured. It is generally believed that localization performance depends on the rugosity of the sea bottom. Authors in \cite{Kalyan2013} show that the bathymetry variation is closely related to the localization performance. Bathymetry variation is commonly used to guide vehicles towards maximizing the bathymetric aids on localization. In~\cite{Galceran2013}, heuristics were used to visit salient points (locations with more bathymetric variation) for better localization. In~\cite{Peng2016}, terrain dispersion, roughness and terrain entropy were evaluated. However, the waypoints along the path were selected manually. In \cite{Rodrigo2015}, trajectories were generated by guiding vehicles to avoid areas with smooth sea floor. In order to plan a path to maximize the effect of bathymetric aids, we need to understand what kind of bathymetry make good localization first. Is the bathymetry variation the sufficient condition? How does one define a good localization? With these answers, we propose a path planning algorithm to optimize the localization performance with bathymetric aids.
+
+\section{Thesis Contribution and List of Publications}
+\label{sec:Publication}
+% bullet form
+
+This thesis presents our work on cooperative localization and bathymetry-aided navigation of autonomous marine systems, with AUVs being the particular focus. The key contributions of this thesis are listed below:
+\begin{enumerate}
+    \item {Distributed localization is explored 
+using a cooperating team of small-sized, low-cost, sensor-limited AUVs. In the presence of underwater communication challenges, we found that localization easily deteriorate when communication loss is high.}
+    \item A new cooperative multi-vehicle localization algorithm using distributed extended information filter (DEIF) is proposed. The proposed method is effective in recording the correlated information in light of constrained underwater communication.
+    \item {We answer the question as to when the correlation can be safely ignored. The safe and dangerous regions for implementation of \textit{na\"ive} filtering in decentralized architecture are derived for multi-sensor tracking problem and multi-vehicle localization problem. The link between these two problems is explained with formulations.}
+    \item We formalize a concept of an information entropy map to quantify the effectiveness of bathymetry measurements on localization.
+    \item A path planning algorithm is proposed for navigation with bathymetric aids. The algorithm generates near-optimal paths based on bathymetric maps, with good localization accuracy generated at the destination.  
+\end{enumerate}
+
+\section{Related Publications}
+\begin{enumerate}[ {[}1{]} ]
+\item R. Gao and M. Chitre, ``Bathymetry-aided Navigation of Autonomous Underwater Vehicles (AUVs)'', Manuscript in preparation for IEEE Journal of Oceanic Engineering
+     \item R. Gao and M. Chitre,``Path Planning for Bathymetry-aided Underwater Navigation,'' in Autonomous Underwater Vehicles (AUV 2018), (Porto, Portugal), November 2018.
+    
+    \item R. Gao and M. Chitre, ``On distributed processing for underwater cooperative localization,'' in 14th International Conference on Ubiquitous Robots and Ambient Intelligence (URAI 2017), (Jeju, South Korea), July 2017. (Invited).
+    
+    \item R. Gao and M. Chitre, ``Cooperative Multi-AUV localization using distributed extended information filter,'' in Autonomous Underwater Vehicles (AUV 2016), (Tokyo, Japan), pp. 206--212, November 2016.
+\end{enumerate}
+
+\section{Thesis Layout}
+\label{sec:Layout}
+% thesis organization
+
+This thesis is organized as follows.
+
+Chapter~\ref{ch:background} provides a brief discussion of related works in cooperative localization and bathymetry-aided navigation. Chapter~\ref{ch:distributed} presents the decentralized processing when vehicles cooperate with communication constraints. A novel distributed localization method is proposed. Chapter~\ref{ch:naive} answers the question of when the correlation can be safely ignored when fusing estimates from different sources. The safe and dangerous regions of implementing \textit{na\"ive} filtering (ignoring correlation) are derived in two applications. The bathymetry-aided localization is justified to be safe if correlation is ignored in cooperation.
+
+Chapter~\ref{ch:bathymetry} illustrates localization with bathymetric aids using an information theoretic approach. In light of the entropy measure and the relation to localization introduced in Chapter~\ref{ch:bathymetry}, a path planning algorithm is proposed and tested through simulation in Chapter~\ref{ch:ban}. 
+
+Chapter~\ref{ch:conclusion} summarizes the key findings in the research and makes suggestions for future works.
+
+
+
+   
+
+
+
+
+

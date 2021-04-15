@@ -1,0 +1,247 @@
+% normal DTW on traces
+
+\chapter{Localization with Bathymetric Aids}
+\label{ch:bathymetry}
+\lhead{Chapter~\ref{ch:bathymetry}. \emph{Localization with Bathymetric Aids}}
+
+
+The idea of using bathymetry for underwater navigation has been explored before~\cite{Kalyan2013,5779659,5664372}. Bathymetry is  the submerged equivalent of an above-water topographic map. It is obtained by a previous surveying and recorded in a geographical map. The key idea  is to match the local bathymetry as seen by an underwater vehicle against the reference  map,  and  estimate  the  location of the vehicle on that  map. High-end autonomous underwater vehicles (AUVs) may use a multibeam sonar to sense the local bathymetry, while low-cost AUVs may make do with a single echo-sounder or altimeter. Observations from depth sensor and altimeter lead to the estimation of water depth at where the vehicle locates. It is fused with the odometric estimation to get the best possible update about the vehicle actual position. The position estimation is improved by moving around with a historic measurements. In~\cite{Kalyan2013}, the authors showed that it was possible to obtain a reasonable localization with a single beam altimeter, as long as sufficient bathymetric variation was available along the AUV path.
+
+
+\section{Inter-vehicle Correlation in Cooperative Localization with Bathymetric Aids}
+
+In this section, we evaluating the inter-vehicle correlation in bathymetry-aided localization through ranging. We quantify the problem due to information double counting, and find out the threshold.
+
+The content will be mainly from URAI paper ``understanding the underwater cooperative localization in distributed processing''.
+
+
+
+Previous works have used KF - mean and covariance charisterization...
+
+\section{Probability Map Based Localization}
+
+
+
+We denote the entire location space at time $t$ is ${\bf{L}}_t$. $\text{Bel}({\bf{L}}_t=l)$ denotes the vehicle's belief that it is at the location $l$ at time $t$. The action space ${\bf{A}}_t$ detnotes the action taken at time step $t$ towards the next step $t+1$, and ${\bf{A}}_{1:t}\doteq\{{\bf{A}}_1,{\bf{A}}_2,...,{\bf{A}}_t\}$. The same definition and notation apply
+to the sensing space ${\bf{S}}_t$. Markov process assumes that given the present state, the future and past states are independent. Formally, it is shown as
+\begin{equation}
+{P}({\bf L}_t|{\bf L}_0,...,{\bf L}_{t-1},{\bf A}_0,...,{\bf A}_{t-1},{\bf S}_0,...,{\bf S}_{t-1},)={P}({\bf L}_t|{\bf L}_{t-1},{\bf A}_{t-1})
+\end{equation}
+This only works if the environment is static and does not change with time \cite{Thrun2005}. Kalman filter used in previous chapter is one of the common methods. However, Kalman filter has assumption of Gaussian noises in estimation and measurements. It does not perform well for situations where the models are nonlinear or the belief is multimodal. For example, a vehicle moves along the ridge of a hill may arrive at a belief that has a peak at its two sideways. In such situations, filters with non-parametric representation can give better description.
+
+We examine the effect of bathymetry aids on localization. Figure Two types of non-parametric localization are investigated in this section: grid-based Markov localization and Monte Carlo localization.
+
+\begin{figure}[H]
+\centering
+\begin{sideways}
+    \includegraphics{./Figures/all.png}
+      \end{sideways}
+            \label{fig:all}
+            \caption{Markov localization with measurement updates. Yellow crosses: top 5 possible locations. Black circles: true path. Cyan circles: estimated locations with top possibility.}
+\end{figure}
+
+\subsection{Grid-based Markov Localization}
+% source code: C:\Users\tmsgr\Dropbox\Gao Rui JL_GR\PhD progress\BAN2\St.John - main_Markov.m
+The grid-based localization uses a histogram to represent the belief distribution in map grids. We use the algorithm in \cite{dieter1999} to simulate the grid-based Markov localization near St John's Island, Singapore. We assume that we have no idea where the vehicle is at the beginning, and hence we initialize an uniform prior distribution in this area.
+
+There are two steps in the Markov localizaiton: action (or propagation) and sensing. The corresponding estimation is to predict and update the estimate. The uncertainty in the prediction smooths out the location possibility while the measurement update reinforces the places which have similar depth as measured.
+
+\begin{itemize}
+  \item The resolution of surveyed bathymetry restricts the accuracy of positioning.
+  \item The accuracy of depth measurements is critical in the final decision. The decision of position by $l=\operatorname*{arg\,max}_l\text{Bel}({\bf{L}}_t=l)$ at initial few measurements is mostly incorrect as there could be many locations with similar top probability. A Gaussian mixture model should be more proper.
+  \item The topology variations (richness of features) on the path are closely related to the positioning performance. With a sparse underwater topology variation, a single AUV may not have enough features for localization. Multiple AUVs with cooperation are able to extract more features.
+      \item The grid-based Markov localization has the ability to represent situations where the position of the vehicle maintains multiple, distinct beliefs. The probability could be any form instead of single Gaussian. It also caters the situation where the initial position is unknown.
+      \item The computation load is comparable to the grid map resolution and is indeed fairly high. This is a tradeoff to use grid-based representation. Taking the St John's map for example, it is 936 meters by 349 meters, with 1 meter resolution, there is 326664 grids, of which 192956 grids are in water.
+\end{itemize}
+
+The simulation assumes of odometric error of 0.6 meters per second in standard deviation, and measurement error of 0.2 meters (std). The AUVs runs at 2 meters per second. There is a measurement every other 15 seconds. From left to right in Figure~\ref{fig:all}, the probability is updated from uniform distribution (1st in the left) to multiple peaks or ridges (2nd from left). The subsequent measurements narrow down. The decisions from top possibility does not converge to the true location until the 3rd measurements.
+
+\begin{figure}[H]
+\centering
+\begin{sideways}
+    \includegraphics{./Figures/all.png}
+      \end{sideways}
+            \label{fig:all}
+            \caption{Markov localization with measurement updates. Yellow crosses: top 5 possible locations. Black circles: true path. Cyan circles: estimated locations with top possibility.}
+\end{figure}
+
+\subsection{Monte Carlo Localization}
+
+Monte Carlo localization is also known as particle filter localization. The computation of PF is determined by the number of particles used.
+
+\begin{figure}[H]
+\centering
+\begin{sideways}
+    \includegraphics{./Figures/all_PF.png}
+      \end{sideways}
+            \label{fig:all_PF}
+            \caption{Particle filter localization with measurement updates. Black circles: true path. Cyan dots: particles.}
+\end{figure}
+
+With the same noise settings and a different path (Figure~\ref{fig:all_PF2}, PF localization has a higher ambiguity.
+\begin{figure}[H]
+\centering
+\begin{sideways}
+    \includegraphics{all_PF2.png}
+      \end{sideways}
+            \label{fig:all_PF2}
+            \caption{Particle filter localization with measurement updates. Black circles: true path. Cyan dots: particles.}
+\end{figure}
+
+With a higher measurement error (for example, due to the waves, the measruement has a standard deviation error 1 meter in Figure~\ref{fig:all_PF3}), we have an even higher ambiguity in the vehicle location.
+
+\begin{figure}[H]
+\centering
+\begin{sideways}
+    \includegraphics{all_PF3.png}
+      \end{sideways}
+            \label{fig:all_PF3}
+            \caption{Particle filter localization with measurement updates. Black circles: true path. Cyan dots: particles. Measurement error $\mathbb{N}(0,1)$ in meter}
+\end{figure}
+
+To do: container in Matlab for PF resampling in the bathymetric grids
+
+\subsection{Particle Filtering}
+
+
+\section{Cooperative Multiple Hypothesis Localization}
+Cooperative AUVs share the terrain information and use their relative geometrical formation to resolve the location.
+\cite{Leung2010} and references
+
+\begin{enumerate}
+  \item Estimating Gaussian mixture model using Expectation Maximization (EM) method
+  \item Incremental of $k$ - number of Gaussians, and using Gaussian mixture model to evaluate the performance of positioning error (variance ranking) \cite{Trailovic2003} (RMSE, confidence level etc.)
+  \item Particle filters with other possible distribution for tracking (Gaussian mixture rather than single Gaussian). Implementation, with variations such as SIR, APF and RPF.
+      \item Cooperative localizations: each vehicle has Gaussian mixture models. The correlation coefficient is more generalized for Gaussian mixtures. \cite{Sawo2006} (good and important work) finds a parametrization for the imprecisely known joint density with single Gaussian and Gaussian mixture marginal.
+          \item GMM for nonlinear \cite{Hanebeck2003}: Bayesian estimation with Gaussian sum approximation.
+\end{enumerate}
+
+\subsection{Gaussian Sum Approximation}
+The use of the Gaussian sum approximation for a nonlinear system and non-Gaussian \textit{a priori} density functions is illustrated here.
+\subsection{Problem Formulation and Modeling}
+\subsection{Approximation of Gaussian Mixture Densities}
+\subsubsection{Expectation Maximization}
+\subsubsection{Clustering For Gaussian Terms}
+
+\textbf{Work and progress}
+\begin{enumerate}
+  \item Markov localization for single AUV (done)
+  \item PF for single AUV (done)
+  \item PF for cooperative AUVs with correlation perfectly known, or studies on the effect of correlation.
+  \item Model the correlation for cooperative PF
+  \item Bayesian estimation for GMM (for single first). (GMM approximation for single AUV was tried.)
+  \item PF for filtering, GMM for communications.
+  \item Improved GMM approximation based on bathymetry variation and measurement accuracy.
+\end{enumerate}
+
+
+\section{Information Entropy Map}
+
+\textit{(Note: before this is multi-hypothesis localization showing that KF cannot capture the filtering.)}
+
+
+Traditional evaluation metrics such as error of estimated mean and estimated error covariance are only fine with Gaussian cases \cite{Chou2011}. In non-Gaussian cases, particle density is used as a flexible tool of representing general densities. We adopt information entropy map to evaluate the localization uncertainty. The idea of entropy-based map has been used as an efficient method of portraying terrain data \cite{Fairbair2011}. Here we use information entropy to evaluate the estimation uncertainty by a particle filter.
+
+This section introduces two types of entropy-based evaluation metrics for filtering uncertainty - the discrete entropy and PF-based entropy. Both display similar trends in describing the estimation uncertainty. We show the entropy values along some paths and will construct value function for each generated paths.
+
+The intention to do understand the path and get prepared for approximated dynamic programming for optimal path planning.
+
+\subsection{Conditional Entropy of Discrete Random Variables}
+
+From a mathematical perspective, the calculation of entropy is based on the probability of all possible outcomes. We cannot simply count the probability (weights) for each particles as this will lose the location information in localization. We can relate the particles to the bathymetry grid map and have the entropy of the vehicle position estimation as
+\begin{equation}
+H({\bf X})=-\sum_{i=1}^{MN}P({\bf x}_i)\log P({\bf x}_i)
+\end{equation}
+where $M$ and $N$ are the number of grids in longitude and latitude direction, $i$ is the index of grid up from $1$ to $MN$. $P({\bf x}_i)$ is the probability mass function at $i$th grid centered at position ${\bf x}_i$ and $\sum_i=1^{MN}P({\bf x}_1)=1$. In the case of $P({\bf x}_i)=0$ for some $i$, the value of $0\log 0$ is taken to be 0.
+
+The entropy value defines the uncertainty (or uniqueness in the other way) of the localization on a grid map. If we have a few grids with high probability, the entropy value is small. Therefore we have less uncertainty about the vehicle location; we know that the vehicle most likely falls into some few grids. If most grids have equal probabilities, we are more uncertain of the vehicle location. The more grids with equal probabilities, the more uncertain we are about where the vehicle is.
+
+The next information for localization comes from the bathymetry map and observations on the (water) depth measurement. As concluded in \cite{Kalyan2013}, large variations in bathymetry provide more unique features in the measurement and hence give better localization.
+
+We define the vehicle measurement about the water depth as $Y$. It is in fact a sum of two measurements - the vehicle depth (the depth from the sea surface to the vehicle) and the altitude (the depth from vehicle to sea bottom). The sum of the these two is the (water) depth measurement $\hat y$ and is assumed to be corrupted with zero-mean Gaussian noise $\hat{y}\sim\mathcal{N}(y,{\bf R})$. The bathymetry map provides the water depth given the location, that is $h({\bf x})$. The function $h(\cdot)$ represents the map reading.
+
+With all the bathymetry map readings, we can find $P(Y|X)$ for all possible values, and subsequently we obtain $P(y)=\sum_{\bf x}P(y|{\bf x})$. According to Bayes Theorem, we have
+\begin{equation}
+P({\bf x}|y)=\frac{P(y|{\bf x})P({\bf x})}{P(y)}
+\end{equation}
+and therefore the conditional entropy is
+\begin{equation}
+H(X|Y)=\sum_{{\bf y}_i} p({\bf y}_i)H(X|Y={\bf y}_i)
+\end{equation}
+
+The conditional entropy tells on average how much localization uncertainly is left after observing the water depth. The reduced amount is the mutual information provided by prior about the location $\bf X$ and bathymetry map information $\bf Y$. We can also calculate the conditional entropy when a single measurement is made, that is $H({\bf X}|Y=y)$.
+
+It should be noted that the discrete entropy depends on the size of the map grid (map resolution). When all particles fall into one grip in the map, the minimum discrete entropy occurs as zero.
+
+\subsection{Particle Filter Based Entropy}
+
+We adopt the approximation of PF-based entropy in \cite{Bpers2010}. For dynamic model and measurement model described in Equations~\eqref{eq:propagation} and \eqref{eq:measurement}, at time step $k$ the particle filter gives the particle set
+\begin{equation}
+\{{\bf x}_k^i,q_k^i\}
+\end{equation}
+where $q_k^i$ is the weight for particle $i$ at position ${\bf x}_k^i$ and $\sum_{i=1}^Nq_k^i=1$. The entropy in a running particle filter has been derived as
+\begin{equation}
+\begin{aligned}
+\label{eq:PFentropy}
+H\left(p({\bf x}_k|Y_k))\right)&\approx \log\left(\sum_{i=1}^Np(y_k|{\bf x}_k^i)q_{k-1}^i\right) \\
+&-\sum_{i=1}^N\log\left(p(y_k|{\bf x}_k^i)(\sum_{j=1}^Np({\bf x}_k^i|{\bf x}_{k-1}^j)q_{k-1}^j)\right)q_k^i
+\end{aligned}
+\end{equation}
+where $Y_k=\{y_1,y_2,\ldots,y_k\}$ includes the measurements in history up to the current time step $k$.
+
+ Here we derive the entropy in predicting vehicle position from time step $k-1$ to $k$ but before measurement at time step $k$. The probability distribution represented by PF is
+\begin{equation}
+p({\bf x}_k|Y_k)\approx\sum_{i=1}^Nq_k^i\delta({\bf x}-{\bf x}_k^i)
+\end{equation}
+
+The weak convergence law for PF states that
+\begin{equation}
+\lim_{N\rightarrow\infty}\sum_{i=1}^Ng({\bf x}_k^i)q_k^i=\int_{\mathcal{X}}g({\bf x}_k)p({\bf x}_k|Y_k)d{\bf x}_k
+\end{equation}
+
+The distribution probability of predicted position from time step $k-1$ to $k$ is $p(x_k|Z_{k-1})$. Its entropy is
+\begin{equation}
+\begin{aligned}
+H\left(p({\bf x}_k|Y_{k-1})\right)&=-\int_{\mathcal{X}}\log p({\bf x}_k|Y_{k-1})p({\bf x}_k|Y_{k-1})d{\bf x}_k \\
+&=-\lim_{N\rightarrow\infty}\sum_{i=1}^N \log p({\bf x}_k|Y_{k-1})q_{k|k-1}^i \\
+&=-\lim_{N\rightarrow\infty}\sum_{i=1}^N \log\left(\lim_{N\rightarrow\infty}\sum_{j=1}^Np({\bf x}_k^i|{\bf x}_{k-1}^j)q_{k-1}^j\right)q_{k|k-1}^i \\
+&\approx-\sum_{i=1}^N \log\left(\sum_{j=1}^Np({\bf x}_k^i|{\bf x}_{k-1}^j)q_{k-1}^j\right)q_{k|k-1}^i \\
+\end{aligned}
+\end{equation}
+where $q_{k|k-1}$ denotes the weights after prediction but before observation at time step $k$. It can be seen that it is equivalent to the PF based entropy approximation in Equation~\ref{eq:PFentropy} when $p(z_k|x_k^i)=1$. This means we assume their is an observation which provide no information updating the distribution.
+
+The approximation performance is affected by the number of particles used and the dimension of the state. However we assume the number of particles is large enough and does not affecting the performance critically.
+
+\subsection{Empirical Convergence and Affecting Factors}
+
+Assuming a simple random walk process where the measurements are corrupted with additive Gaussian noise on the position, we compare the PF-based entropy with the exact entropy which is running on a Kalman filter. We also plot the discrete entropy based on the map grids.
+%\begin{figure}[H]
+% \centering
+%    \includegraphics[width=\textwidth]{flowchart.png}
+%      \caption{Flowchart of one step in filter iteration}
+%      \label{fig:flowchart}
+%\end{figure}
+\begin{figure}[H]
+\centering
+%\begin{sideways}
+    \includegraphics[width=\textwidth]{convergence2Dexample.png}
+     % \end{sideways}
+            \label{fig:convergence2Dexample}
+            \caption{Gaussian random walk process: PF-based Entropy versus exact entropy. Vertical green lines indicate the time steps when measurements are available.}
+\end{figure}
+We can see that both PF-based entropy and discrete entropy have the same trend for error growth in propagation and error reduction from measurement. Resampling does not affect the discrete entropy much as resampling follows the same way as the weight calculation in map grids. However, the discrete entropy is not as sensitive or accurate from time step 10 to time step 19. This is because a large uncertainty described by 5000 particles (at time step 19) cannot be fully described. When measurement is made at time step 10, particles that match the measurements are fewer as they are widely spread. Another risk of discrete entropy is the accuracy also depends on the grid size. Under estimation of entropy may occur when most particles falls into one or few grids.
+
+Below is a summary of the metrics we can use to describe uncertainty in particle filtering for localization.
+\begin{center}
+\begin{tabular}{ | p{2.5cm} |  p{2.5cm}| p{2.5cm} |  p{5cm}| }
+\hline
+  Metrics & Method & Usage & Problem \\ \hline
+  Discrete grid-based entropy & Counting weights of particles which fall into the same grid & $H({\bf X}|{\bf Y})$ or $H({\bf X}|{\bf Y}=y)$ & Inefficiency in capturing the true distraction (over-estimated entropy), or under-estimated entropy due to grid size \\ \hline
+  PF-based entropy & Approximation from PDF to PMF & $H({\bf X}|{\bf Y}=y)$ & Computation load \\
+  \hline
+\end{tabular}
+\end{center}
+We use PF-based entropy. Although the calculation load is heavy, for a given path, we only calculate the entropy at the end point (destination).
+
+\section{Simulation and Localization Performance}
+Can apply on single or cooperative localization

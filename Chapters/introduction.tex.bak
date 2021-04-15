@@ -1,0 +1,30 @@
+% Chapter 1
+
+\chapter{Introduction}
+\label{ch:introduction}
+\lhead{Chapter~\ref{ch:introduction}. \emph{Introduction}}
+
+This dissertation presents a systematic design of whistle pattern recognition and classification. Classification is a key step in many studies of dolphin recognition and behavior. A robust analysis tool that automatically extract whistle information from recordings and classify them into different groups is necessary, especially when a large amount of whistles are available.
+
+\section{Motivation for Research}
+\label{sec:Motivation}
+
+
+\section{Problem Statement} % or problem description
+\label{sec:Problem}
+
+\section{The Thesis Layout}
+\label{sec:Layout}
+
+\section{Contribution}
+\section{List of Publications}
+\label{sec:Publication}
+
+R. Gao, M. Chitre, S. H. Ong, and E. Taylor, ``Template matching
+for classifcation of dolphin vocalizations,'' in Proceedings of MTS/IEEE
+Oceans'08, Kobe, Japan, 2008.
+
+%\noindent R. Gao, M. Chitre, S. H. Ong, and E. Taylor, ``Pattern recognition and classification of dolphin vocalizations,'' (In preparation).
+
+
+

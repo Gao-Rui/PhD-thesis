@@ -1,0 +1,899 @@
+\chapter{Distributed Localization in a Cooperative Team}
+\label{ch:distributed}
+\lhead{Chapter~\ref{ch:distributed}. \emph{Distributed Localization in a Cooperative Team}}
+
+%One paper has been published on the topic of this chapter:
+
+%\begin{enumerate}[ {[}1{]} ]
+%    \item R. Gao and M. Chitre, ``Cooperative Multi-AUV localization using distributed extended information filter,'' in Autonomous Underwater Vehicles (AUV 2016), (Tokyo, Japan), pp. 206--212, November 2016.
+%\end{enumerate}
+
+\section{Problem Statement}
+
+In presence of limited bandwidth and lossy channels, the information communicated between vehicles may not be raw information; cooperation in a team may not be acknowledged by all the members as well. We show that the cooperation under constrained communication still helps improve individual performance. However the cooperation may yield worse localization than single-vehicle operation without cooperation. This is mainly due to the lossy channel which makes vehicles treat correlated information as independent. We illustrate these problems with simple examples and propose a decentralized localization algorithm. This algorithm is able to handle unknown correlation, requires small transmission packets and provides consistent position estimates when fusing correlated data.
+
+The work in this chapter was published in \cite{Gao2016}.
+
+\section{Decentralized Cooperation with Limited Communication}
+
+Many natural behaviors have shown that simple interactions among a population of simple agents improve the overall performance with decentralized processing. Examples are birds flocking, ant colonies, animal herding, bacterial growth, fish schooling, etc. The collective behavior of decentralized, self-organized systems is called \textit{Swarm Intelligence (SI)}. We show the improvement through simulations of the two common SI behaviors. Next we simulate a small team of AUVs, cooperating at various loss rate of the communication packets. We highlight the problems and challenges of the distributed localization with underwater communication constraints.
+
+\subsection{Self-Propelled Particles (SPP) and Swarm AUVs}
+
+Self-propelled particles (SPP) is a swarm modelled by a collection of particles that move with a constant speed but respond to a random perturbation \cite{CZIROK200017}. The simple interactions with each other lead to the emergence of collective behavior. Two examples of SPP models - group heading alignment and aggregation, are applied to a simulation with $7$~AUVs. We show that at various loss rate of the communication, the AUV swarm still outperforms the individual.
+
+\subsubsection{Group Heading Alignment}
+
+The group of AUVs are simulated with random noises added to the vehicle heading direction and heading speed. Each vehicle shares its heading quasi-periodically, that is, periodically with some noises. Other vehicles have a probability to hear the broadcast and turn to the angle bisector with the broadcaster's heading. Vehicles are deployed randomly in an area of $1000\times 1000$ meters squared with random initial headings.
+
+\begin{figure}[htpb]
+\begin{center}
+\subfigure[At $50\%$ packet loss: Smaller update interval yields faster convergence and smaller variation in group heading.]{
+  \includegraphics[width=.8\linewidth]{Figures/HeadingAlignment.png}
+  \label{subfig:HeadingAlignment}
+}
+\subfigure[With update interval $\delta T=30$ seconds: Smaller packet loss yield better group heading alignment.]{
+  \includegraphics[width=.8\linewidth]{Figures/HeadingAlignment2.png}
+  \label{subfig:HeadingAlignment2}
+}
+\caption{Smaller update interval and less packet loss lead to better group heading alignment.}
+\label{fig:HeadingAlignment}
+\end{center}
+\end{figure}
+
+The standard deviation of all AUV headings indicates the alignment of the group. We plot the alignment with different the update interval $\delta T$ at a loss rate $50\%$. In Figure~\ref{subfig:HeadingAlignment}, the update interval $\delta T$ varies 1 minute apart from 30 seconds to 4 and half minutes, with a varying noise $\mathcal{N}(0,2^2)$ in seconds. It can be seen that the standard deviation of vehicle headings is smallest for $\delta T=30$ seconds. With shorter update interval, the heading information spreads faster and the group headings get aligned within 3 minutes. In the other hand, longer update interval gives slower heading alignment. Update intervals of 210 seconds and 270 seconds show little convergence in vehicle headings. The standard deviation is near $\frac{\pi}{2}$ radius, which means vehicles are heading in almost all directions.
+
+Figure~\ref{subfig:HeadingAlignment2} shows the group heading alignment at update interval $\delta T=30$ seconds, with different loss rate. With higher loss rate, the group headings align to a lesser degree.
+
+The group heading alignment can be used to lead the group heading with one vehicle sticking to its planned heading. Similar application is the group search and tracking, where team members follow the heading combined between target-driven and group-coherent rules.
+
+\subsubsection{AUV Aggregation}
+
+Another commonly seen swarm intelligence is the aggregation, where entities, particularly animals, of similar size which aggregate together, perhaps milling about the same spot or moving or migrating in some direction. We model this aggregation using AUVs. In the aggregation, at each time, one vehicle broadcasts its own position estimates. Other vehicles that successfully pick up the broadcast will head towards the broadcaster, or the center of the broadcasting vehicles if they received two broadcasts within 1 second. An aggregation circle is drawn to cover all the vehicle locations. We use the maximum pairwise distance to evaluate the group coverage. Vehicles are initialized to head straight away from each other. They only update their headings if they receive the broadcasted position from other team members. We show that AUVs aggregation performance highly depends on the communication rate.
+
+Figure~\ref{fig:coverage} shows that if the communication breaks down totally ($p_L=1$), vehicles move further and further from each other and group coverage increases linearly. When the communication has less packet loss, the group coverage converges faster, to a minimum coverage. Group coverage converges to around 100 meters with loss rate $0$ and $0.2$.  
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.8\textwidth]{Coverage.png}
+\caption{AUV aggregation at update interval $\delta T=30$ seconds: smaller packet loss results in faster convergence of the group coverage.}
+\label{fig:coverage}
+\end{figure}
+
+\subsection{Small Team of AUVs}
+
+We look at 3 AUVs cooperating through acoustic ranging. 3 AUVs is considered the smallest number. The reason is that 2-AUV group has common information directly returned; it is not complete to understand the information flow and the effect of unknown correlation in a third member with a 2-AUV group.
+
+The distance between vehicles is calculated based on the time-of-flight of the acoustic signals. Compared with swarm AUVs, the cooperative network is smaller and the cooperation is specified to localization with aids of acoustic ranging.
+
+From time step $k$ to the next time step $k+1$, vehicle's position $x$ propagates in a way such that
+\begin{equation}
+\begin{split}
+{\bf x}^{(i)}_{k+1}&={\bf F}^{(i)}\bar{\bf x}^{(i)}_k+{\bf B}^{(i)}_k{\bf u}^{i}_k+{\bf \omega}^{(i)}\\
+%{\bf z}^{(i)}&={\bf x}^{(i)}+{\bf v}^{(i)} \\
+\end{split}
+\end{equation}
+where $i$ is the vehicle number and ${\bf w}^{(i)}$ is propagation additive noise. The propagation noises are independent zero-mean Gaussian processes with covariances ${\bf Q}^{(i)}$. ${\bf B}^{(i)}$ and ${\bf u}^{(i)}$ are the control matrix and control input.
+
+When AUVs send acoustic signals for ranging, they also encapsulate the information in the acoustic signals during the exchange. With a nonlinear range measurement, Extended Kalman filter (EKF) \cite{Julier2004} is firstly formulated for the centralized system with 3 vehicles (Vehicle $i$, $j$ and $m$). The centralized system assumes all the local propagation, local measurements and relative measurement are known to a central unit. Then a simple decentralization is used to show the problem of communication issues. A decentralized system is closer to the realistic: each vehicle only knows what happens locally; the local propagation, local measurement, and relative measurement when it happens to this vehicle. Therefore, the filter has to be designed as to what are kept locally and what are communicated. We discuss the possibility and simulate scenarios using the decentralized EKF.
+
+The centralized EKF predicts the positions of 3 vehicles as
+\begin{align}
+\begin{split}
+          {\hat{\bf x}}_{k+1|k}&={\bf F}_{k}{\hat{\bf x}}_{k|k}+{\bf B}_{k}{\bf u}_{k} \\
+\left[\begin{array}{c}
+                {\hat{\bf x}}^{(i)}\\
+                {\hat{\bf x}}^{(j)}\\
+                {\hat{\bf x}}^{(m)}\\
+              \end{array}
+            \right]_{k+1|k}&=\left[
+              \begin{array}{ccc}
+                {\bf F}^{(i)} & \mathbf{0} & \mathbf{0} \\
+                \mathbf{0} & {\bf F}^{(j)} & \mathbf{0}\\
+                \mathbf{0} & \mathbf{0} & {\bf F}^{(m)}\\
+              \end{array}
+            \right]_{k}\left[\begin{array}{c}
+                {\hat{\bf x}}^{(i)}\\
+                {\hat{\bf x}}^{(j)}\\
+                {\hat{\bf x}}^{(k)}\\
+              \end{array}
+            \right]_{k|k}+\left[
+              \begin{array}{ccc}
+                {\bf B}^{(i)} & \mathbf{0} & \mathbf{0} \\
+                \mathbf{0} & {\bf B}^{(j)} & \mathbf{0}\\
+                \mathbf{0} & \mathbf{0} & {\bf B}^{(m)}\\
+              \end{array}
+            \right]_{k}\left[\begin{array}{c}
+                {{\bf u}}^{(i)}\\
+                {{\bf u}}^{(j)}\\
+                {{\bf u}}^{(k)}\\
+              \end{array}
+            \right]_{k|k}\\
+\end{split}
+\end{align}
+where $\mathbf 0$ is zero matrix in proper size. The centralized control input $\bf u$ and control matrix $\bf B$ are formulated in the same way as the centralized state vector ${\bf x}$ and propagation matrix $\bf F$. The propagation of $i$th AUV error covariance is
+\begin{equation}
+{\bf P}_{k+1|k}^{(i)}={\bf F}^{(i)}_{k}{\bf P}^{(i)}_{k|k}{{\bf F}^{(i)}}_{k}^\top+{\bf Q}^{(i)}_{k}
+\end{equation}
+while the error propagation of the cross-correlation term between AUV $i$ and $j$ is
+\begin{equation}
+{\bf P}_{k+1|k}^{(ij)}={\bf F}^{(i)}_{k}{\bf P}_{k|k}^{(ij)}{{\bf F}_{k}^{(j)}}^\top.
+\end{equation}
+If the propagation model of every AUV is known to all, each AUV can keep its respective row of the centralized covariance matrix and make full propagation for the cross-correlation term. However this only applies for missions with predefined control input. In \cite{Stergios2000}, authors split the cross-correlation term such that
+ \begin{align}
+\begin{split}
+{\bf P}^{(ij)}_{k+1|k}&=\sqrt{{\bf P}^{(ij)}_{k+1|k}}\sqrt{{\bf P}^{(ji)}_{k+1|k}}^\top \\
+&={\bf F}^{(i)}_{k}\sqrt{{\bf P}^{(ij)}_{k|k}}({\bf F}^{(j)}_{k}\sqrt{{\bf P}^{(ji)}_{k|k}})^\top.
+\end{split}
+\end{align}
+According to \cite{Stergios2000}, when AUV $i$ and AUV $j$ meet, they exchange their distributed cross-correlation terms and get the full picture by multiplying them. Therefore vehicles do not need communicate about their respective propagation model. However the local measurement should update the correlation as well as the correlated terms of other members. Meanwhile, due to the communication packet loss, for example, AUV $i$ may not know the information exchange happening between Vehicle $j$ and Vehicle $m$.
+
+The range measured between AUV $i$ and $m$ at time step $k+1$ is $r_{k+1}$ and is observed as
+ \begin{align}
+\begin{split} \label{eq:ranging}
+r_{k+1}&=\emph{h}({\bf x}_{k+1})+v_{k+1}\\
+&=\|{\bf x}^{(i)}_{k+1}-{\bf x}^{(m)}_{k+1}\|+\upsilon_{k+1}
+\end{split}
+\end{align}
+where $\|\bullet\|$ is a norm operation and $v_{k+1}\sim\mathcal{N}(0,{\bf R}_{r,k+1})$ is the ranging measurement error. ${\bf R}_r$ is the error covariance. The observation matrix for range between AUV $i$ and $m$ is the Jacobian
+ \begin{align}
+\begin{split}
+{\bf H}_{k+1}&=\left.\frac{\partial \emph h}{\partial \bf x}\right\vert_{{\bf \hat x}_{k+1|k}} \\
+            &=\left[
+              \begin{array}{ccc}
+              {\bf H}^{(im)} & \mathbf{0}_{1\times 2} & -{\bf H}^{(im)} \\
+              \end{array}
+            \right]_{k+1|k}
+\label{fig:H}
+\end{split}
+\end{align}
+where position state is in size $2\times 1$ and ${\bf H}^{(im)}=\frac{({\hat{\bf x}}^{(i)}-{\hat{\bf x}}^{(m)})^\top}{\|{\bf \hat x}^{(i)}-{\bf \hat x}^{(m)}\|}$. The residual covariance matrix is %(we drop the time step for display simplicity)
+ \begin{align}
+\begin{split}
+{\bf S}_{k+1}&={\bf H}_{k+1}{\bf P}_{k+1|k}{\bf H}_{k+1}^T+{\bf R}_{r,k+1}\\
+&=[{\bf H}_{k+1}^{(im)}({\bf P}_{k+1|k}^{(i)}-{\bf P}_{k+1|k}^{(mi)}-{\bf P}_{k+1|k}^{(im)}+{\bf P}_{k+1|k}^{(m)}){{\bf H}_{k+1}^{(im)} }^\top]+{\bf R}_{r,k+1}^{(im)}.
+\end{split}
+\end{align}
+We can see that the observation matrix and the residual covariance matrix are derived solely from the information related to the two vehicles. The Kalman gain is
+\begin{align}
+\begin{split}
+{\bf K}_{k+1}&={\bf P}_{k+1|k}{\bf H}_{k+1}^\top{\bf S}_{k+1}^{-1}\\
+%&=\left[
+%              \begin{array}{ccc}
+%                {\bf P}_{11} & {\bf P}_{12} & {\bf P}_{13} \\
+%                {\bf P}_{21} & {\bf P}_{22} & {\bf P}_{23}\\
+%                {\bf P}_{31} & {\bf P}_{32} & {\bf P}_{33}\\
+%              \end{array}
+%            \right]\left[
+%              \begin{array}{c}
+%              {{\bf H}^{(13)}}^\top \\ \mathbf{0}_{2\times 1} \\ -{{\bf H}^{(13)}}^\top \\
+%              \end{array}
+%            \right]{\bf S}^{-1}\\
+%            &=\left[
+%              \begin{array}{c}
+%                ({\bf P}_{11}-{\bf P}_{13}){{\bf H}^{(13)}}^\top \\
+%                ({\bf P}_{21}-{\bf P}_{23}){{\bf H}^{(13)}}^\top \\
+%                ({\bf P}_{31}-{\bf P}_{33}){{\bf H}^{(13)}}^\top \\
+%              \end{array}
+%            \right]{\bf S}^{-1}\\
+            \left[
+              \begin{array}{c}
+                {\bf K}^{(i)} \\
+                {\bf K}^{(j)} \\
+                {\bf K}^{(m)} \\
+              \end{array}
+            \right]_{k+1}&=\left[
+              \begin{array}{c}
+                ({\bf P}_{k+1|k}^{(i)}-{\bf P}_{k+1|k}^{(im)}){{\bf H}_{k+1}}^\top \\
+                ({\bf P}_{k+1|k}^{(ji)}-{\bf P}_{k+1|k}^{(jm)}){{\bf H}_{k+1}}^\top \\
+                ({\bf P}_{k+1|k}^{(mi)}-{\bf P}_{k+1|k}^{(m)}){{\bf H}_{k+1}}^\top \\
+              \end{array}
+            \right]{{\bf S}_{k+1}}^{-1}.\\
+\end{split}
+\label{eq:KalmanGain}
+\end{align}
+The state estimate is updated as
+\begin{align}
+\begin{split}
+{\bf \hat x}_{k+1|k+1}&={\bf \hat x}_{k+1|k}+{\bf K}_{k+1}{\bf \tilde{y}}_{k+1}\\
+&=\left[
+              \begin{array}{c}
+                {\bf \hat x}^{(i)} \\
+                {\bf \hat x}^{(j)} \\
+                {\bf \hat x}^{(m)} \\
+              \end{array}
+            \right]_{k+1|k}+\left[
+              \begin{array}{c}
+                {\bf K}^{(i)} \\
+                {\bf K}^{(j)} \\
+                {\bf K}^{(m)} \\
+              \end{array}
+            \right]_{k+1}(r_{k+1}-\|{\bf \hat x}^{(i)}_{k+1}-{\bf \hat x}^{(m)}_{k+1}\|).
+\end{split}
+\label{eq:AUV3updateEstimate}
+\end{align}
+We can see that the Kalman gain for each AUV is proportional to the difference between the cross-correlations with the exchanging pair. If vehicle $j$ picks up the ranging and communicated information from the exchanging pairs, it can also update locally. 
+
+The covariance update is
+\begin{align}
+\begin{split}
+&{\bf P}_{k+1|k+1} \\
+=&({\bf I}-{\bf K}_{k+1}{\bf H}_{k+1}){\bf P}_{k+1|k}\\
+=&{\bf P}_{k+1|k}-\Delta{\bf P}_{k+1} \\
+&\Delta {\bf P}_{k+1} \\
+=&{\bf K}_{k+1}{\bf H}_{k+1}{\bf P}_{k+1|k}\\
+=&\!\!\left[
+              \begin{array}{ccc}
+                {\bf K}^{(i)}{\bf H}_{k+1}({\bf P}^{(i)}-{\bf P}^{(mi)}) & \textcolor[rgb]{1.00,0.00,0.00}{{\bf K}^{(i)}{\bf H}_{k+1}({\bf P}^{(ij)}-{\bf P}^{(mj)})} & {\bf K}^{(i)}{\bf H}_{k+1}({\bf P}^{(im)}-{\bf P}^{(m)}) \\
+                \textcolor[rgb]{0.00,0.00,1.00}{{\bf K}^{(j)}{\bf H}_{k+1}({\bf P}^{(i)}-{\bf P}^{(mi)})} & {{\bf K}^{(j)}{\bf H}_{k+1}({\bf P}^{(ij)}-{\bf P}^{(mj)})} & \textcolor[rgb]{0.00,0.00,1.00}{{\bf K}^{(j)}{\bf H}_{k+1}({\bf P}^{(im)}-{\bf P}^{(m)})}\\
+                {\bf K}^{(m)}{\bf H}_{k+1}({\bf P}^{(i)}-{\bf P}^{(mi)}) & \textcolor[rgb]{1.00,0.00,0.00}{{\bf K}^{(m)}{\bf H}_{k+1}({\bf P}^{(ij)}-{\bf P}^{(mj)})} & {\bf K}^{(m)}{\bf H}_{k+1}({\bf P}^{(im)}-{\bf P}^{(m)})\\
+              \end{array}
+            \right]. \\
+           % &=\left[
+ % \begin{array}{c}
+  %  \Delta {\bf P}_{row,k+1}^{(1)} \\
+  %  \Delta {\bf P}_{row,k+1}^{(2)} \\
+  %  \Delta {\bf P}_{row,k+1}^{(3)} \\
+ % \end{array}
+%\right]
+\end{split}
+\label{eq:AUV3update}
+\end{align}
+With a ranging between Vehicle $i$ and Vehicle $m$, the terms highlighted in red and blue are the updates on the cross-correlations with AUV $j$. If vehicles keep each row locally, the cross-correlation terms need to be updated together such that they are the same (in transpose) as the one kept at the counterpart. If all the exchanged information is not acknowledged by AUV $j$ and yet the exchanging AUVs still update their correlation with AUV $j$, the terms highlighted in red and blue are not same (in transpose). 
+
+There are two options when exchanging packet is lost to AUV $j$:
+\begin{itemize}
+  \item Total ignorance: AUV $j$ does not pick up the communications between AUV $i$ and $j$ and has no idea about this cooperation afterwards. The packet gets lost completely.
+  \item Delay and relay: The communications between AUV $i$ and $m$ at time $k+1$ is logged by the exchanging AUVs and other AUVs (if there are more vehicles which pick up the cooperation). It will be used to update AUV $j$ later when they meet. It is an \textit{`Out Of Sequence Measurement' (OOSM)} problem.
+\end{itemize}
+
+Three filters are tested in the simulation of cooperative localization. They are:
+\begin{itemize}
+  \item DR - Dead reckoning without any ranging and cooperation among the AUVs. 
+  \item CEKF - the centralized EKF with ranging. It tracks the full error covariance matrix of the team, gives the optimal estimation and therefore serves as a baseline for comparison.
+  \item DEKF - the decentralized EKF with some packet loss rate to other AUVs. Each vehicle keeps its respective row in the CEKF. The centralized filter is represented as
+  \begin{equation}
+      {\bf P}_{k+1}=\left[
+  \begin{array}{c}
+     {\bf P}_{row,k+1}^{(i)} \\
+     {\bf P}_{row,k+1}^{(j)} \\
+     {\bf P}_{row,k+1}^{(m)} \\
+  \end{array}
+\right].
+  \end{equation}
+\end{itemize}
+
+In the simulation, for each AUV, the heading direction and heading speed (between 0.5 and 2 m/s) are randomly generated, with a low probability ($1.4\%$) to change to a new direction and speed at each time step. The propagation noise comes from the zero-mean Gaussian noise of the velocity with $0.1$ m/s standard deviation for all AUVs. At every $10$ seconds, a pair of AUVs exchange their information for ranging. No local measurement is made.
+
+\subsubsection{Distributed EKF with Packet Loss}
+
+\begin{figure}[htbp]
+\centering
+\subfigure[$p_L=0$]{
+   \includegraphics[width=0.65\textwidth]{L0-average.png}
+   \label{subfig:L0}
+ }
+\subfigure[$p_L=0.4$]{
+   \includegraphics[width=0.45\textwidth]{Ldot4-average.png}
+   \label{subfig:Ldot4}
+ }
+\subfigure[$p_L=0.5$]{
+   \includegraphics[width=0.45\textwidth]{Ldot5-average.png}
+   \label{subfig:Ldot5}
+ }
+\subfigure[$p_L=0.55$]{
+   \includegraphics[width=0.45\textwidth] {Ldot55-average.png}
+   \label{subfig:Ldot55}
+ }
+\subfigure[$p_L=0.75$]{
+   \includegraphics[width=0.45\textwidth] {Ldot75-average.png}
+   \label{subfig:Ldot75}
+ }
+\caption{Average Error in Distance of 3 AUVs with various loss rate $p_L$: When packet loss is less, DKF improves localization through cooperation. When packet loss is higher, DKF improves localization at first but later deteriorates fast.}
+\label{fig:L}
+\end{figure}
+
+The advantage of cooperative localization using ranging over the group of AUVs is shown by CEKF in Figure~\ref{fig:L}. When DR has drifting error, the aid received from ranging information during the first 100~seconds is significant. After 100 seconds, ranging still helps by making the overall drifting slower.
+
+When the loss rate $p_L=0$ (Figure~\ref{subfig:L0}), DEKF has the same performance as CEKF. When the loss rate increases to $40\%$ (Figure~\ref{subfig:Ldot4}), we see that the average error by DEKF is larger than the average error given by CEKF. When $p_L$ goes up to $50\%$ (Figure~\ref{subfig:Ldot5}), there is a jump in estimation error observed. When $p_L$ is even larger (Figure~\ref{subfig:Ldot55} and Figure~\ref{subfig:Ldot75}), the positioning error grows rapidly and the performance is much worse than DR. This result agree with the statement in \cite{Julier1997}: when the correlation is ignored, estimation overconfidence arises with the fused estimate, and may lead to filter divergence.
+
+\subsubsection{Delay and Relay with a Simplified Model}
+
+Equations~\eqref{eq:AUV3updateEstimate}~and~\eqref{eq:AUV3update} show that the update of the estimate and error covariance are additive. If AUV $j$ misses the update from the ranging between AUV $i$ and $m$ at time step $k+1$, it will continue predicting its estimate without the additive terms. If the propagation matrix ${\bf F}$ is an identity matrix, the error covariance matrix propagates with additive process noise $\bf Q$ only; the correction term for the missing update can be simply added to the current state estimate. If the propagation matrix is not an identity matrix, the propagation in the delayed duration has to be re-calculated to obtain the current state (this is called \textit{retrodiction} or \textit{backward prediction}). This becomes especially hard for nonlinear propagation model as the inverse model depends on all the past status.
+
+We test on a simplified model with the following assumptions:
+
+\begin{assumption}\label{as:1}
+  The propagation model of every AUV has identity matrix $\bf F$ and is known to all.
+\end{assumption}
+
+\begin{assumption}\label{as:2}
+  Ranging is the only available measurement.
+\end{assumption}
+
+Let each AUV keep the details of a limited number $N_p$ of the past updates (let $N_p=5$ for example).
+The procedures and required information are as follows:
+\begin{enumerate}
+  \item \textbf{\textit{Check}}: When 2 AUVs communicate for ranging update, they compare and check the logs of the counterpart for the past $N_p$ exchanges.
+  \item \textbf{\textit{Delayed measurement}}: If any missing logs in the past are found, the current state estimate ${\bf \hat x}_{row}$ and error estimate ${\bf P}_{row}$ are updated with the delayed measurement(s).
+  \item \textbf{\textit{Ranging}}: The two AUVs then exchange information for ranging, and log the current update. At the same time, the other AUVs who successfully pick up the ranging update will also get updated and log the update.
+\end{enumerate}
+
+The information exchange and update is kept at the communicating AUV $i$ and $m$ and other AUVs if they successfully pick up the communication. They are:
+\begin{itemize}
+  \item Ranging time $k_e$.
+  \item Exchangers' identity (for example, AUV $i$ and $m$).
+  \item Exchangers' position estimates ${\bf \hat x}_{k_e}^{(i)}$ and ${\bf \hat x}_{k_e}^{(m)}$.
+  \item The row of exchangers' error covariance ${\bf P}_{row,k_e}^{(i)}$ and ${\bf P}_{row,k_e}^{(m)}$.
+  \item The acoustic ranging $r_{k_e}$.
+  \item The error covariance ${\bf R}_{r,k_e}$ of the acoustic ranging.
+\end{itemize}
+
+We simulate 4 AUVs with vehicle ID as $1,2,3$ and $4$. We schedule the communication of the AUV pairs in Table~\ref{tab:pair}. Figure~\ref{fig:L1000AUV4lossRate1} shows a special case where only AUV $4$ has a loss rate $L_4=1$. This means AUV $4$ gets the delayed ranging update of other pairs of AUVs only when it communicates with others for ranging. The DEKF of AUV $1$ to $3$ are the same as CEKF and is not shown here. We are only showing the RMSE of AUV $4$ over 1000 runs. It can be seen that the estimation of AUV 4 gets corrected after 30 seconds once it reconnects with the other AUVs.
+
+\begin{table}[htbp] 
+\begin{center}
+\caption{Pairing Sequence for Ranging Update}
+\label{tab:pair}
+\begin{tabular}{|c|cc|}
+  \hline
+  % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+  Time & Pair &  \\
+  ($\delta T=10$ seconds) & $i$ & $j$ \\ \hline
+  10 & 1 & 2 \\
+  20 & 2 & 3 \\
+  30 & 3 & 4 \\
+  40 & 4 & 1 \\
+  50 & 1 & 2 \\
+  60 & 2 & 3 \\
+  $\vdots$ & $\vdots$ & $\vdots$\\
+   \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\subfigure[RMSE of AUV $4$ with $p_L=1$]{
+   \includegraphics[width=0.7\textwidth]{L1000AUV4lossRate1.png}
+   \label{subfig:L1000AUV4lossRate1}
+ }
+\subfigure[Zoom-in: RMSE of AUV $4$ with $p_L=1$]{
+   \includegraphics[width=0.7\textwidth]{L1000AUV4lossRate1-zoomin1.png}
+   \label{subfig:L1000AUV4lossRate1-zoomin1}
+ }
+\caption{Estimation error of AUV 4 gets corrected once it reconnects with the other AUVs after 30 seconds.}
+\label{fig:L1000AUV4lossRate1}
+\end{figure}
+
+Figure~\ref{fig:smLdot4} shows the result when all AUVs have loss rate $p_L=0.4$. It can be seen that the logs of past $N_p=5$ rangings are able to correct the DEKF and give an estimate which is very close to the one given by CEKF.
+\begin{figure}[htbp]
+\centering
+\subfigure[RMSE of 4 AUVs with $p_L=0.4$]{
+   \includegraphics[width=0.7\textwidth]{smLdot4-average.png}
+   \label{subfig:smLdot4}
+ }
+\subfigure[Zoom-in: RMSE of 4 AUVs with $p_L=0.4$]{
+   \includegraphics[width=0.7\textwidth]{smLdot4-average-zoomin.png}
+   \label{subfig:smLdot4-zoomin}
+ }
+\caption{Logs of past $N_p=5$ rangings are able correct the DEKF and give similar result to CEKF.}
+\label{fig:smLdot4}
+\end{figure}
+
+In fact, the pairing sequence is critical in the delay and relay. As long as $N_p\geq N-2$ where $N$ is the number of AUVs in the team, the controlled pairing sequence can guarantee the circulation of the information among the team over a cycle. 
+
+Compared to terrestrial communication, underwater communication uses acoustic waves instead of electromagnetic waves. It has problems such as multi-path propagation, time variations of the channel, small available bandwidth and strong signal attenuation especially over long ranges. Therefore the communication has low data rates. In such a case, successful ranging has irregular time interval and random pairing sequence. It is possible that AUVs miss the past ranging update without any relay. It is also possible that an AUV gets `out of sequence measurement' (OOSM). The whole communication scheme (time and sequence) becomes complicated and unpredictable. 
+
+Meanwhile, only the pre-planned missions are known to each vehicle. The actual paths and activities change with respect to the situation and may not be updated to every other member. Vehicles can also make local measurement to update their position estimates. All these possibilities make the correlation untrackable in the distributed processing .
+%\section{Directional Bounded Covariance Inflation}
+
+%% \textbf{this part of work is excluded first as I couldn't find the proper scripts for simulation.}
+
+%\cite{Reece2005} generalised Covariance Intersection (CI) to Bounded Covariance Inflation (BCI), which incorporates upper and/or lower bounds on the cross correlations when they are known. It is applied to multiagent data fusion and inference problems for which agents have both private and shared variables.
+
+%Study of consistency of dBC inflation and experimental data (Progress report Sept 2015)
+
+\section{Information Loss in Distributed Processing}
+
+In the previous section, each member keeps a row of the centralized state vector and error covariance. Vehicles may still lose track of the exact correlation with each other. In this section, each vehicle only keeps estimates about itself and we assume the inter-vehicle correlation is known exactly. Examples show that compared with centralized processing, the distributed processing has some information loss even when the correlation is tracked precisely.
+
+\begin{figure}[htbp]
+\centering
+\subfigure[Central processing (CKF)]{
+   \includegraphics[width=0.7\textwidth]{Figures/CKF.png}
+   \label{subfig:CKF}
+ }
+\subfigure[Decentralized processing (DKF)]{
+   \includegraphics[width=0.7\textwidth]{Figures/DKF.png}
+   \label{subfig:DKF}
+ }
+\caption{Central processing architecture vs. distributed processing architecture. CKF fuses the raw measurements directly while DKF fuses the local processed data.}
+\label{fig:proc2}
+\end{figure}
+
+The simplest example consists of two vehicles estimating their locations in 1-dimensional space. Their initial correlation coefficient ranges from $[0:0.1:0.9]$. Both vehicles follow the 3 steps: 1) propagate with noise, 2) make local measurements about their positions, and 3) communicate their positions along with range measurements. Figure~\ref{fig:proc2} shows the centralized Kalman filter (CKF) and decentralized Kalman filter (DKF) estimation architectures. The positions of Vehicle 1 and 2 are considered as random variables as they evolve at each succeeding moments with random process noise. Each vehicle makes a local measurement, followed by a relative measurement
+\begin{equation}
+\begin{split}
+{\bf z}^{(1)}&={\bf x}^{(1)}+{\bf \nu}^{(1)}, \\
+{\bf z}^{(2)}&={\bf x}^{(2)}+{\bf \nu}^{(2)}, \\
+{\bf r}&=h({\bf x}^{(1)},{\bf x}^{(2)})+{\bf \upsilon}.
+\end{split}
+\end{equation}
+
+A central estimation (Figure~\ref{subfig:CKF} uses the aggregated state and aggregated measurements. The centralized error covariance is 
+\begin{equation}
+\begin{split}
+{\bf P}_\text{CKF}&=(\left[
+             \begin{array}{cc}
+               {\bf P}^{(1)} & {\bf P}_{12} \\
+               {\bf P}_{12}^\top & {\bf P}^{(2)} \\
+             \end{array}
+           \right]^{-1}+{\bf H}_\text{CKF}^\top\left[
+                                        \begin{array}{ccc}
+                                          {\bf R}^{(1)} & {\bf 0} & {\bf 0} \\
+                                          {\bf 0} & {\bf R}^{(2)} & {\bf 0} \\
+                                          {\bf 0} & {\bf 0} & {\bf R}_r \\
+                                        \end{array}
+                                      \right]^{-1}{\bf H}_\text{CKF}
+)^{-1}
+\end{split}
+\end{equation}
+where ${\bf H}_\text{CKF}=\frac{\partial{\bf z}}{\partial{\bf\hat x}}$. DKF (Figure~\ref{subfig:DKF}) only sends over the processed estimate and error covariance after local updates. We assume the initial correlation is exactly known. Therefore, both filters trace the correlation and therefore estimation are strictly consistent. 
+Figure~\ref{fig:eg1-1} shows the estimated error covariance after the two processing architectures in Figure~\ref{fig:proc2}. The initial error covariances are ${\bf P}^{(1)}=4,{\bf P}^{(2)}=4$ respectively. The relative measurement has an error covariance $\bf R=1$. We can see that DKF has larger error covariance except when the initial correlation coefficient is 0. With a larger initial correlation, the processing of the local measurements before fusion results in a larger gap in the estimation error compared with CKF. 
+
+\begin{figure}[htbp]
+\begin{center}
+\subfigure[${\bf R}^{(1)}={\bf R}^{(2)}=10$,${\bf Q}=1$]{
+\includegraphics[width=0.45\textwidth]{Example1-1}\label{fig:Example1-1}
+}
+\subfigure[${\bf R}^{(1)}={\bf R}^{(2)}=1$,${\bf Q}=1$]{
+\includegraphics[width=0.45\textwidth]{Example1-2}\label{fig:Example1-2}
+}
+\subfigure[${\bf R}^{(1)}={\bf R}^{(2)}=25$,${\bf Q}=1$]{
+\includegraphics[width=0.45\textwidth]{Example1-3}\label{fig:Example1-3}
+}
+\subfigure[${\bf R}^{(1)}={\bf R}^{(2)}=10$,${\bf Q}=10$]{
+\includegraphics[width=0.45\textwidth]{Example1-4}\label{fig:Example1-4}
+}
+\caption{Estimation error squared versus initial correlation coefficient. DKF has larger error covariance than CKF except when initial correlation coefficient is 0.}
+\label{fig:eg1-1}
+\end{center}
+\end{figure}
+
+We use information entropy to explain the performance of DKF. Entropy refers to the uncertainty associated with a probability distribution, and is a measure of the descriptive complexity of a PDF. Mathematically it is expressed as
+\begin{equation}
+h\{F({\bf x})\}\triangleq\mathbb{E}\{-\ln p({\bf x})\}
+\end{equation}
+where ${\bf x}$ is a random variable. With the measurement ${\bf z}$, the entropy of the conditional probability is
+\begin{equation}
+\begin{split}
+%p({\bf x}|{\bf z})&=\frac{p({\bf x})p({\bf z}|{\bf x})}{p({\bf z})} \\
+\mathbb{E}\{-\ln[p({\bf x}|{\bf z})]\}&=\mathbb{E}\{-\ln[p({\bf x})]\}-\mathbb{E}\{\ln[\frac{p({\bf z}|{\bf x})}{p({\bf z})}]\} \\
+h({\bf x}|{\bf z})&=h({\bf x})-I({\bf z};{\bf x}).
+\end{split}
+\end{equation}
+It states that the entropy following an observation is reduced by an amount equal to the information inherent in the observation \cite{CRCinbook}.
+
+CKF gives
+\begin{equation}
+\label{eq:p1}
+\begin{split}
+h_{\text{CKF}}&=h({\bf x}|{\bf z}) \\
+&=h({\bf x})-I({\bf z};{\bf x}) \\
+&=[h({\bf x}^{(1)})+h({\bf x}^{(2)})-I({\bf x}^{(1)};{\bf x}^{(2)})]-[I({\bf z}^{(1)};{\bf x}^{(1)})+I({\bf z}^{(2)};{\bf x}^{(2)})+I({\bf r};{\bf x})].
+\end{split}
+\end{equation}
+DKF gives
+\begin{equation}
+\label{eq:p2}
+\begin{split}
+h_{\text{DKF}}&=h({\bf x}^{(1)},{\bf x}^{(2)}|{\bf z}^{(1)},{\bf z}^{(2)})-I({\bf r};{\bf x}^{(1)},{\bf x}^{(2)}) \\
+&=[h({\bf x}^{(1)}|{\bf z}^{(1)},{\bf z}^{(2)})+h({\bf x}^{(2)}|{\bf z}^{(1)},{\bf z}^{(2)})-I(({\bf x}^{(1)};{\bf x}^{(2)}|{\bf z}^{(1)},{\bf z}^{(2)}))]-I({\bf r};{\bf x}) \\
+&=[h({\bf x}^{(1)}|{\bf z}^{(1)})+h({\bf x}^{(2)}|{\bf z}^{(2)})-I(({\bf x}^{(1)};{\bf x}^{(2)}|{\bf z}^{(1)},{\bf z}^{(2)}))]-I({\bf r};{\bf x}) \\
+&=[h({\bf x}^{(1)})-I({\bf z}^{(1)};{\bf x}^{(1)})]+[h({\bf x}^{(2)})-I({\bf z}^{(2)};{\bf x}^{(2)})]-I(({\bf x}^{(1)};{\bf x}^{(2)}|{\bf z}^{(1)},{\bf z}^{(2)}))-I({\bf r};{\bf x}). \\
+\end{split}
+\end{equation}
+The difference between these two expressions is $I({\bf x}^{(1)};{\bf x}^{(2)})\geq I({\bf x}^{(1)};{\bf x}^{(2)}|{\bf z}^{(1)},{\bf z}^{(2)})$, and makes $h_\text{CKF}\leq h_\text{DKF}$. The equality happens only when $I({\bf x}^{(1)};{\bf x}^{(2)})=0$. The mutual information between the states is reduced by conditioning on local measurements. There is information loss in only transmitting the processed up-to-date estimates, instead of raw sensor data.% or $I({\bf x}^{(1)};{\bf x}^{(2)})=h({\bf x}^{(1)},{\bf x}^{(2)})$. 
+
+In another way, we elaborate this in the context of multivariate distribution. Assuming the cross-correlation can be tracked, the mutual information $I({\bf x}^{(1)};{\bf x}^{(2)})$ is expressed as
+\begin{equation}
+\begin{split}
+I({\bf x}^{(1)};{\bf x}^{(2)})&=-\frac{1}{2}\ln|\Sigma_\rho|
+\end{split}
+\end{equation}
+where $\Sigma_\rho$ is the correlation matrix constructed from the covariance matrix ${\bf P}=\left[                      \begin{array}{cc}
+{\bf P}^{(1)} & {\bf P}^{(12)}\\                   {{\bf P}^{(12)}}^\top & {\bf P}^{(2)} \\          \end{array}\right]
+$. The entries of the correlation matrix  records the Pearson product-moment correlation coefficients between the random variables. In 1-dimensional space, $I({\bf x}^{(1)};{\bf x}^{(2)})=-\frac{1}{2}\ln(1-\rho^2)$ where $\rho$ is the correlation coefficient. After local measurement update, the new central error covariance is given as
+\begin{equation}
+\begin{split}
+{\bf\bar P}&=(\left[                    \begin{array}{cc}{\bf P}^{(1)} & \rho\sqrt{{\bf P}^{(1)}{\bf P}^{(2)}}\\                       \rho\sqrt{{\bf P}^{(1)}{\bf P}^{(2)}} & {\bf P}^{(2)} \\\end{array}\right]^{-1}+\left[         \begin{array}{cc}                      {\bf R}^{(1)} & 0 \\                      0 & {\bf R}^{(2)} \\\end{array}\right]^{-1})^{-1}.
+\end{split}
+\end{equation}
+The new correlation coefficient for $\bf{\bar P}$ is
+\begin{equation}
+\begin{split}
+\bar\rho&=\frac{\rho}{\sqrt{(1+\frac{{\bf P}^{(2)}}{{\bf R}^{(2)}}(1-\rho^2))(1+\frac{{\bf P}^{(1)}}{{\bf R}^{(1)}}(1-\rho^2))}} \\
+&\leq\rho.
+\end{split}
+\end{equation}
+Therefore we have
+\begin{equation}
+\begin{split}
+I({\bf x}^{(1)};{\bf x}^{(2)}|{\bf z}^{(1)},{\bf z}^{(2)})&\leq I({\bf x}^{(1)};{\bf x}^{(2)})  \\
+h_\text{CKF}&\leq h_\text{DKF}. \\
+\end{split}
+\end{equation}
+It means CKF ends with less uncertainty in the state $[{{\bf x}^{(1)}}^\top,{{\bf x}^{(2)}}^\top]^\top$, or equivalently smaller estimation error. We can understand this problem as information loss in pre-processing of the raw data. If we want DKF to achieve CKF performance, we need to transmit all the past local propagation and measurement data. 
+
+\section{Distributed Extended Information Filter}
+
+In Section~\ref{sec:unknowncorrelation}, we have defined the fusion principles. It means that information fusion through cooperation must improve the individual performance and consistent estimation is preferred. Existing method either ignores the correlation from different sources or overestimate the correlation. The former is called \textit{na\"ive} filter. The later such as covariance intersection method \cite{julier2001} and its related \cite{Reece2005,Lihao2013A}, ellipsoid intersection method \cite{Sijs2010} and largest ellipsoid algorithm \cite{Benaskeur2002} assume maximum correlation when dealing with information from unknown sources.
+
+We use extended information filter (EIF) - an inverse covariance form of the Kalman filter, to separate the independent part of the local information. The reason is that the local prediction and measurement information can be encapsulated into a single message and acoustically transmitted with bounded size. The decentralized EIF was first implemented in a single-beacon cooperative localization in \cite{Eustice2006} where the server (an surface vehicle) sends the encapsulated information while performing ranging with the client (underwater vehicle). It can handle asynchronous broadcasts from the server but the information flows in one direction only, that is, from server to clients. To accommodate more AUVs operating over very large operational areas without surface beacons, we propose a new cooperative multi-AUV localization algorithm using distributed EIF (DEIF). We describe the detailed design and implementation for a team of cooperative AUVs, where no single AUV functions as a beacon possessing accurate position information. The proposed method is designed to record the correlated information from the most recent cooperation, providing consistent position estimates in event of packet loss.
+
+\subsection{Illustrative Examples}
+
+In this section, we use some simple examples to illustrate the problems with traditional approaches and show how our proposed DEIF overcomes these problems.
+
+\subsubsection{Limited Bandwidth}
+
+The estimation result of EIF for the 3-step problem (Figure~\ref{fig:proc2}) is shown in Figure~\ref{fig:ThreeStep}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.7\textwidth]{ThreeStep1}
+\caption{Traditional distributed processing (DKF) performs poorly as compared to centralized processing (CKF), but our proposed distributed method (DEIF) is able to perform well.}
+\label{fig:ThreeStep}
+\end{figure}
+
+As discussed, there is information loss in the traditional DKF even if the correlation is precisely known. To maintain the same performance as the centralized estimation, traditional DKF requires a full storage and transmission of the historical information. If there are $n$ steps of local propagation and measurements before the cooperation, the packet size for transmission will increase as $\mathcal{O}(n)$. Our proposed method using DEIF is able to avoid the information loss that DKF suffers, and perform as well as the CKF using transmissions of fixed, small-sized packets.
+
+\subsubsection{Inter-Vehicle Correlation}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.7\textwidth]{DoubleCounting}
+\caption{Estimation error of AUV 1 using various filters in a 3-AUV cooperative localization example. DEIF is close to CKF.}
+\label{fig:DoubleCounting}
+\end{figure}
+
+We demonstrate the danger of ignoring the correlation in a 3-AUV cooperative localization. Let AUVs broadcast their state estimates in a round-robin fashion. The estimation error of AUV~1 is shown in Figure~\ref{fig:DoubleCounting}. At 10 seconds, all AUVs submerge and lose GPS position measurements, but continue to communicate with each other. At 90~seconds, AUV~2 obtains a high-quality position measurement (say, by surfacing and obtaining a GPS fix). AUV~1's localization is improved by fusing estimates from AUV~2. A \textit{na\"ive} Kalman filter (NKF) simply ignores the correlation among vehicles; it assumes an improvement in estimate by fusing data from `independent' sources, while in fact there is no improvement from double counting the shared information. The estimated error covariance of NKF appears to be very low, but the actual estimation error diverges quickly. Its performance can be even worse than single vehicle localization (SKF). Our proposed method (DEIF) performs well, and produces results that are quite close to the ideal (but impossible) CKF.
+
+\subsection{Formulation and Design}
+
+The vehicle propagation and measurement models follow Equation~\eqref{eq:propagation} and Equation~\eqref{eq:measurement}.
+
+In the multi-vehicle cooperation, a vehicle encodes its information into acoustic packets and broadcasts as a Peer Vehicle (PV). Other vehicles in the team receive the packets as Receiving Vehicles (RVs). When the team is synchronized, the one-way travel time of the acoustic signals is simply the difference between the time-of-launch and time-of-arrival. The distance from the PV with position ${\bf x}_\text{P}$ to an RV with position ${\bf x}_\text{R}$ is obtained, given the propagation speed of underwater signals. The observation model is
+\begin{equation}
+ r_k=||{\bf x}_{k,\text{R}}-{\bf x}_{k,\text{P}}||+\upsilon_k
+\end{equation}
+where the operator $||\cdot||$ denotes the Euclidean norm, and $\upsilon_k$ is the zero-mean Gaussian noise with covariance ${\bf R}_k$. To minimize the effect of nonlinearity, we assume the vehicles are far away from each other so that the error in position estimation can be modeled as a 2-dimensional zero-mean Gaussian random variable, after the relative measurement update. We assume all the noises are independent Gaussian noise.
+
+The Gaussian-distributed position state vector ${\bf x}$ with error covariance $\bf P$ has the associated information matrix and information vector in an EIF as
+\begin{equation}
+\begin{split}
+\label{eq:dual}
+{\Lambda}&={\bf P}^{-1}\\
+          {\bf\eta}&=\Lambda\bf{x}. \\
+\end{split}
+\end{equation}
+At time step $k$, each vehicle keeps an information set $({\bf x}_k,{\bf{\bf P}}_k, {\Lambda}_p,{\bf\eta}_p)$. ${\bf x}_k$ is the combined 3-state vector ${\bf x}_k=[{x}_{k}^\top,{x}_t^\top,{x}_c^\top]^\top=[{x}_{k}^\top,{\bf x}_p^\top]^\top$ where ${\bf x}_p=[{x}_t^\top,{x}_c^\top]^\top$. $x_k$ is the current position state. $t$ denotes the time step when the most recent cooperation is made. During this cooperation, if a broadcast from a PV with position state $x_c$ is received, this vehicle's position is updated as $x_t$. If this vehicle broadcasts as a PV, $x_c$ is dummy and $x_t$ is considered fully correlated with the team. $({\Lambda}_p,{\bf\eta}_p)$ is the corresponding information pair (information matrix and vector) of ${\bf x}_p$ by Equation~\eqref{eq:dual}.
+
+\subsubsection{Initialization}
+At time step $k=0$, the initial position ${x}_0$ is assigned to ${x}_t$. We assume that all vehicles are deployed independently, the initial position has no correlation with the team and $x_c$ is dummy.
+
+\subsubsection{Local Prediction}
+Let $(\Lambda_k,\eta_k)$ be the information pair for ${\bf x}_k=[{x}_{k}^\top,{\bf x}_p^\top]^\top$, and $x_{k+1}$ be the predicted state from $x_k$ according to the propagation model. We augment the state vector with the predicted state and we have ${\tilde{\bf x}}_{k+1}=[{x}_{k+1}^\top,{x}_k^\top,{\bf x}_p^\top]^\top$. The augmented state vector has an associated information pair given by
+     \[
+\sbox0{$\begin{matrix}{\bf 0} & {\bf 0}\end{matrix}$}
+\sbox1{$\begin{matrix}{\bf 0}\\ {\bf 0}\end{matrix}$}
+%
+{\tilde\Lambda}_{k+1}=\left[
+                    \begin{array}{ccc}
+                      {\bf Q}_k^{-1} & -{\bf Q}_k^{-1}{\bf F}_k & {\bf 0} \\
+                      -{\bf F}_k^\top{\bf Q}_k^{-1} & {\bf F}_k^\top{\bf Q}_k^{-1}{\bf F}_k & {\bf 0} \\
+                      {\bf 0} & {\bf 0} & {\bf 0} \\
+                    \end{array}
+                  \right]+\left[
+\begin{array}{cc}
+{\bf 0} &\usebox{0}\\
+  \usebox{1}&\makebox[\wd0]{\large $\Lambda_{k}$}
+\end{array}
+\right] \\
+\]
+\[
+\tilde\eta_{k+1}=\left[
+                                    \begin{array}{c}
+                                      {\bf Q}_k^{-1}(f({\bf\hat x}_k,{\bf a}_k)-{\bf F}_k{\bf\hat x}_k) \\
+                                      -{\bf F}_k^\top{\bf Q}_k^{-1}(f({\bf\hat x}_k,{\bf a}_k)-{\bf F}_k{\bf\hat x}_k) \\
+                                      {\bf 0} \\
+                                    \end{array}
+                                  \right]+\left[
+\begin{array}{c}
+{\bf 0}\\
+ \makebox[\wd0]{\large $\eta_{k}$}
+\end{array}
+\right].
+\]
+We can see that in an EIF, the prediction information is contained in the first term of the addition, with zeros padded accordingly. Meanwhile, we only see non-zero entries in the off-diagonal blocks between states at consecutive time steps. This agrees with Markov process assumption stating that prediction for the future state solely depends on the most recent state.
+
+The 3-state vector ${\bf x}_{k+1}=[x_{k+1}^\top,x_t^\top,x_c^\top]^\top$ and associated covariance ${\bf{\bf P}}_{k+1}$ are predicted as
+
+\begin{equation}
+\begin{split}
+{\hat x}_{k+1}&=f({\hat x}_k,{\bf a}_k) \\
+{\bf{\bf P}}_{k+1}&=\left[
+                     \begin{array}{ccc}
+                       {\bf F}_k & {\bf 0} & {\bf 0} \\
+                       {\bf 0} & {\bf I} & {\bf 0} \\
+                       {\bf 0} & {\bf 0} & {\bf I} \\
+                     \end{array}
+                   \right]{\bf{\bf P}}_k+\left[
+                     \begin{array}{ccc}
+                       {\bf Q}_k & {\bf 0} & {\bf 0} \\
+                       {\bf 0} & {\bf 0} & {\bf 0} \\
+                       {\bf 0} & {\bf 0} & {\bf 0} \\
+                     \end{array}
+                   \right]
+\end{split}
+\end{equation}
+where $\bf I$ is the identity matrix in proper size.
+
+\subsubsection{Local Measurement Update}
+
+The measurement matrix ${\bf H}_{k}$ is sparse as it only affects a few subblocks within the corresponding entry for $x_k$ in the information pair. It allows an additive update to the delta information as
+\begin{equation}
+\begin{split}
+\Lambda_{k}^+&=\Lambda_{k}+{\bf H}_{k}^\top{\bf R}_{k}^{-1}{\bf H}_{k} \\
+\eta_{k}^+&=\eta_{k}+{\bf H}_{k}^\top{\bf R}_{k}^{-1}({z}_{k}-h({\bf\hat x}_{k})-{\bf H}_{k}{\bf\hat x}_{k})
+\label{eq:EIF_update}
+\end{split}
+\end{equation}
+where the superscript ``$+$'' means the observation is given up to and including time step $k$. It is noted that the local measurement may not be available at every time step.
+
+The local measurement updates ${\bf x}_k$ and ${\bf{\bf P}}_k$ in a standard Kalman filter way.
+\subsubsection{Cooperative Localization with Relative Measurement}
+We denote the information set kept at the PV as $({\bf x}_k,{\bf{\bf P}}_k, {\Lambda}_p,{\bf\eta}_p)_{\text{P}}$. Similarly, the subscript to the information set is R for the RV. It should be noted that in a team containing more than two vehicles, the time step $t$ recorded at PV and RV may not be the same.
+
+\subsubsection*{\textit{Delta information for cooperation}}
+
+Both PV and RV form their delta information such that
+\begin{equation}
+\begin{split}
+\Delta\Lambda_{k}&={\Lambda}_k-\left[
+                                   \begin{array}{cc}
+                                     {\bf 0} & {\bf 0} \\
+                                     {\bf 0} & \Lambda_p \\
+                                   \end{array}
+                                 \right]
+ \\
+\Delta\eta_{k}&=\eta_k-\left[
+                                   \begin{array}{c}
+                                     {\bf 0} \\
+                                     \eta_p \\
+                                   \end{array}
+                                 \right]
+\end{split}
+\end{equation}
+The PV broadcasts the delta information $(\Delta\Lambda_k,\Delta\eta_k)_\text{P}$ together with $({\bf x}_k,{\bf{\bf P}}_k)_\text{P}$ in a packet. The RV receives the packet and obtains the acoustic ranging as well.
+
+\subsubsection*{\textit{Incorporating the delta information}}
+When the broadcast from PV is received, the RV firstly forms a information pair corresponding to the combined state vector $[{x}_{k,\text{R}}^\top,{x}_{t,\text{R}}^\top,{x}_{t,\text{P}}^\top,{x}_{k,\text{P}}^\top]^\top$. The information matrix consists of three parts: the delta information from the PV $\Delta\Lambda_{k,\text{R}}$, the delta information from the RV $\Delta\Lambda_{k,\text{P}}$, and the information matrix $\bar\Lambda_t$ corresponding to $[{x}_{t,\text{R}}^\top,{x}_{t,\text{P}}^\top]^\top$. $\bar\Lambda_t$ is corresponding to $[{x}_{t,\text{R}}^\top,{x}_{t,\text{P}}^\top]^\top$. %, and is derived from their bounding covariance matrix.
+
+Assuming the states ${x}_{c,\text{R}}$ and ${x}_{c,\text{P}}$ are from the same source and fully correlated, a bounding joint covariance for states ${x}_{t,\text{R}}$ and  ${x}_{t,\text{P}}$ can be derived. We use split covariance intersection (SCI) \cite{Lihao2013A} to form the bounding covariance. (In a comparative study later, we show the benefit introduced by the delta information in DEIF over a pure SCI filter.) At both PV and RV sides, given the covariance matrix $\left[
+            \begin{array}{cc}
+              {\bf P}_t &  {\bf P}_{tc} \\
+              {\bf P}_{ct} & {\bf P}_c \\
+            \end{array}
+          \right]$ (corresponding to $[{x}_t^\top,{x}_c^\top]^\top$), the split form for ${x}_t$ is
+          \begin{equation}
+          \begin{split}
+          {\bf P}_t&={\bf P}_\text{IND.}+{\bf P}_\text{DEP.} \\
+          {\bf P}_\text{IND.}&={\bf P}_t-{\bf P}_{tc}{\bf P}_c^{-1}{\bf P}_{ct} \\
+          {\bf P}_\text{DEP.}&={\bf P}_{tc}{\bf P}_c^{-1}{\bf P}_{ct}. \\
+          \end{split}
+          \end{equation}
+          The reason is that $x_t-{\bf P}_{tc}{\bf P}_c^{-1}x_c$ and $x_c$ are independent, and $x_c$ represents the source of information shared from the team.
+
+The split covariance matrix for $[{x}_{t,\text{R}}^\top,{x}_{t,\text{P}}^\top]^\top$ is therefore 
+\begin{equation}
+\left[
+   \begin{array}{cc}
+              {\bf P}_\text{IND.,R}+\frac{{\bf P}_\text{DEP.,R}}{\kappa} &  \bf 0 \\
+              \bf 0 & {\bf P}_\text{IND.,P}+\frac{{\bf P}_\text{DEP.,P}}{1-\kappa} \\
+            \end{array}
+          \right]_t, 
+\end{equation}
+and $\kappa\in[0,1]$. The value of $\kappa$ is obtained by minimizing the error covariance of RV after the relative measurement update. The corresponding information pair for $[{x}_{t,\text{R}}^\top,{x}_{t,\text{P}}^\top]^\top$ is formed as
+           \begin{equation}
+          \begin{split}
+          \bar\Lambda_t&=\left[
+            \begin{array}{cc}
+              {\bf P}_\text{IND.,R}+\frac{{\bf P}_\text{DEP.,R}}{\kappa} &  \bf 0 \\
+              \bf 0 & {\bf P}_\text{IND.,P}+\frac{{\bf P}_\text{DEP.,P}}{1-\kappa} \\
+            \end{array}
+          \right]_t^{-1} \\
+          {\bf\bar\eta}_t&=\bar\Lambda_t\mathbb{E}([{x}_{t,\text{R}}^\top,{x}_{t,\text{P}}^\top]^\top). \\
+          \end{split}
+          \end{equation}
+
+The information pair $({\bar\Lambda}_k,{\bar\eta}_k)$ corresponding to the combined state vector $[{x}_{k,\text{R}}^\top,{x}_{t,\text{R}}^\top,{x}_{t,\text{P}}^\top,{x}_{k,\text{P}}^\top]^\top$ is formed in Equation~\eqref{eq:full_info_update}, where $\Delta\eta^*_{k,\text{P}}$ and $\Delta\Lambda^*_{k,\text{P}}$ are the rearranged $\Delta\eta_{k,\text{P}}$ and $\Delta\Lambda_{k,\text{P}}$, according to the reversed sequence $[{x}_{t,\text{P}}^\top,{x}_{k,\text{P}}^\top]^\top$. Zeros are padded before and after where needed. The zero padding and addition are illustrated in Figure~\ref{fig:EIF_fusion}.
+
+        %  \begin{figure*}[htbp]
+% ensure that we have normalsize text
+%\normalsize
+% Store the current equation number.
+%\setcounter{MYtempeqncnt}{\value{equation}}
+% Set the equation number to one less than the one
+% desired for the first equation here.
+% The value here will have to changed if equations
+% are added or removed prior to the place these
+% equations are referenced in the main text.
+%\setcounter{equation}{5}
+\begin{equation}
+\begin{split}
+\label{eq:full_info_update}
+\bar\Lambda_k&=\left[
+                        \begin{array}{ccc}
+                           \Delta\Lambda_{k,\text{R}} & \cdots & \bf 0 \\
+                          \vdots & \ddots & \vdots\\
+                          \bf 0 & \cdots & \bf 0 \\
+                        \end{array}
+                      \right]
+          +\left[
+                                       \begin{array}{ccccc}
+                                         \bf 0 & \cdots & \bf 0 & \cdots & \bf 0\\
+                                         \vdots & \vdots & \vdots & \vdots & \vdots\\
+                                         \bf 0 & \cdots & \bar\Lambda_t & \cdots & \bf 0\\
+                                         \vdots & \vdots & \vdots & \vdots & \vdots\\
+                                         \bf 0 & \cdots & \bf 0 & \cdots & \bf 0\\
+                                       \end{array}
+                                     \right]+\left[
+                        \begin{array}{ccc}
+                           \bf 0 & \cdots & \bf 0 \\
+                          \vdots & \ddots & \vdots\\
+                          \bf 0 & \cdots & \Delta\Lambda^*_{k,\text{P}} \\
+                        \end{array}
+                      \right] \\
+                       \bar\eta_k&=\left[
+                                       \begin{array}{c}
+                                         \Delta\eta_{k,\text{R}} \\
+                                         \vdots  \\
+                                         \bf 0 \\
+                                       \end{array}
+                                     \right]+\left[
+                                       \begin{array}{c}
+                                         \bf 0 \\
+                                         \vdots  \\
+                                         \bar\eta_t \\
+                                         \vdots\\
+                                         \bf 0 \\
+                                       \end{array}
+                                     \right]+\left[
+                                       \begin{array}{c}
+                                         \bf 0 \\
+                                         \vdots  \\
+                                         \Delta\eta^*_{k,\text{P}} \\
+                                       \end{array}
+                                     \right]
+                                     \end{split}
+\end{equation}
+% Restore the current equation number.
+%\setcounter{equation}{\value{MYtempeqncnt}}
+% The IEEE uses as a separator
+%\hrulefill
+% The spacer can be tweaked to stop underfull vboxes.
+%\vspace*{4pt}
+%\end{figure*}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.6\textwidth]{EIF_fusion}
+\caption{Illustration of incorporating delta information in simple addition.}
+\label{fig:EIF_fusion}
+\end{figure}
+
+\subsubsection*{\textit{Relative measurement update}}
+With the information pair $({\bar\Lambda}_k,{\bar\eta}_k)$, a measurement update can be made in the same way as Equation~\eqref{eq:EIF_update}. %The relative distance measured only relates ${x}_{k,\text{R}}$ and ${x}_{k,\text{P}}$. The combined information matrix and vector are updated at the RV side in the same way as the local measurement update.
+  
+\subsubsection*{\textit{Information set update}}
+  
+After broadcasting out its information set, PV considers its state ${x}_k$ as fully correlated with the team, and assigns it to $x_t$. States at time steps prior to $k$ are discarded. The RV assigns the updated ${x}_{k,\text{R}}$ to ${x}_t$. The received ${x}_{k,\text{P}}$ is recorded as ${x}_c$. At both sides, the most recent cooperation time $t$ is assigned the value of $k$. The corresponding information pair $({\Lambda}_p,{\bf\eta}_p)$ is recorded. 
+
+\subsection{Simulation Studies Using Field Experiment Data} 
+
+We compare the performance of the proposed DEIF with several other methods using both simulated data and experimented data for a team of three vehicles. The experimented data was collected from a team of three vehicles executing lawnmower surveys in Singapore waters (Figure~\ref{fig:FieldTrip3Vs}). While executing the planned path, vehicles experience propagation noise introduced by choppy water, system hardware and so on. Local measurements such as GPS positions (if the vehicle is on the surface), or bathymetric measurements (for submerged vehicles in a known terrain), are fused to improve localization. Vehicles may not get good local measurements about their positions all the time. For example, vehicles may submerge throughout the mission, or the sea bottom is smooth without much variation to provide rich bathymetry information. The cooperation happens when one vehicle broadcasts and the other two vehicles receive the information set. %One-way travel time acoustic ranging is used to measure the distance from the broadcasting vehicle to the receiving vehicle.
+
+\begin{figure}[htpb]
+\centering
+\includegraphics[width=0.8\textwidth]{FieldTrip3Vs}
+\caption{Cooperative localization results with field data.}
+\label{fig:FieldTrip3Vs}
+\end{figure}
+
+When the inter-vehicle correlation is unknown due to packet loss, we show that DEIF performs better than the filter ignoring the correlation or overestimating the correlation. The effectiveness and advantages will be demonstrated by illustrative examples and comparative results from simulated and experimented data as follows.
+
+\subsubsection{Simulated Data}
+
+The simulated data mimics the experimented data, using identical sensor characteristics and the same trajectories. In this simulation, vehicles take turns to broadcast their information every 10 seconds. The transmission packets are lost at a rate of $p_L$. All vehicles cruise on surface and have GPS fixes in the first 100 seconds. Only Vehicle 2 re-surfaces at 420 seconds for 50 seconds. The results are evaluated in two metrics: the normalized estimation error squared (NEES) and root mean square error (RMSE). The NEES provides a measurement of estimation consistency \cite{Bar-shalom-yellow}. Under ideal conditions, the NEES has a degree-of-freedom (DoF) equal to the dimension of the state (in our case, DoF is 2). The RMSE records the estimated error in distance, compared with the true position. Figure~\ref{fig:simulation} shows the NEES and RMSE over 10 runs for Vehicle 3 at different packet loss rate. The arrows indicate the successful reception of the broadcast.
+
+\begin{figure}[htbp]
+\begin{center}
+\subfigure[]{
+\includegraphics[width=0.45\textwidth]{sim4-tx}
+\label{subfig:sim1}
+}
+\subfigure[]{
+\includegraphics[width=0.45\textwidth]{sim3-tx}
+\label{subfig:sim2}
+}
+\subfigure[]{
+\includegraphics[width=0.45\textwidth]{sim2-tx}
+\label{subfig:sim3}
+}
+\subfigure[]{
+\includegraphics[width=0.45\textwidth]{sim1-tx}
+\label{subfig:sim4}
+}
+\caption{Simulation results for Vehicle 3 at packet loss rate (a) $p_l=0$ (b) $p_l=0.3$ (c) $p_l=0.6$ and (d) $p_l=0.9$. The vertical arrows show the time when Vehicle 3 receives broadcast. DEIF  has smaller estimation error than SKF and SCI filters, and better consistency than NKF.}
+\label{fig:simulation}
+\end{center}
+\end{figure}
+
+SKF stands single Kalman filter. NKF stands for \textit{na\"ive} Kalman filter. It claims to have the lowest RMSE but has severe problem with estimation consistency. This is especially the case when vehicles communicate at high frequency (with lower packet loss rate). The estimation error given by NKF is in fact much higher than the error it claims to be. When vehicles seldom communicate and are mostly independent of each (Figure~\ref{subfig:sim4}), the \textit{na\"ive} assumption by NKF is almost met, and therefore a consistent estimation is given.
+
+We also compare the proposed method with SCI filter from \cite{Lihao2013A}. In the SCI filter, assuming each state consists of correlated component and independent component, whose covariances are
+\begin{equation}
+\begin{split}
+{\bf P}_\text{PV}&={\bf P}_\text{IND.,P}+{\bf P}_\text{DEP.,P} \\
+{\bf P}_\text{RV}&={\bf P}_\text{IND.,R}+{\bf P}_\text{DEP.,R}. \\
+\end{split}
+\end{equation}
+As the range-only measurement is not enough to formulate a full estimate of the RV position, SCI filter in \cite{Lihao2013A} can not be applied directly for the cooperation. We follow the idea of SCI and form a consistent covariance $\bar{\bf P}$ for the combined state vector $[x_\text{RV}^\top,x_\text{PV}^\top]^\top$.
+The $\bar{\bf P}$ is therefore
+\begin{equation}
+\begin{split}
+\bar{\bf P}&=\left[
+            \begin{array}{cc}
+              {\bf P}_\text{IND.,R}+\frac{{\bf P}_\text{DEP.,R}}{\kappa} &  \bf 0 \\
+              \bf 0 & {\bf P}_\text{IND.,P}+\frac{{\bf P}_\text{DEP.,P}}{1-\kappa} \\
+            \end{array}
+          \right] \\
+          &=\bar{\bf P}_\text{IND.}+\bar{\bf P}_\text{DEP.}.
+          \end{split}
+\end{equation}
+The range measurement is used to update the combined state vector in standard Kalman filter way. The independent component for RV is obtained in the corresponding entries of the combined independent component
+\begin{equation}
+\begin{split}
+\bar{\bf P}^+_{\text{IND.}}&=({\bf I}-{\bf K})\left[
+            \begin{array}{cc}
+              {\bf P}_\text{IND.,R} &  \bf 0 \\
+              \bf 0 & {\bf P}_\text{IND.,P} \\
+            \end{array}
+          \right]({\bf I}-{\bf K})^\top+{\bf K}{\bf R}{\bf K}^\top.
+\end{split}
+\end{equation}
+
+We can see that with more frequent cooperation (lower packet loss rate), SCI tends to be over conservative about its estimation. In the other hand, EIF estimation maintains good consistency and performs better than SCI on all occasions.
+
+\subsubsection{Experiment Data}
+
+The navigation data is used in the offline processing to compare different estimation filters. In the experiment, GPS logs are used as the benchmark to compute positioning errors. The arrows in Figure~\ref{fig:ThreeVehiclesCoop} indicate the time when the broadcasts are sent and successfully received by other vehicles. In the first 100~seconds, Vehicles~1 and~3 have good local measurements. Vehicle~2 exhibits a slow position drift with the information shared by Vehicles~1 and~3. Vehicle~2 obtains good local measurements from 200 to 300~seconds, and from 600~seconds onward. The proposed DEIF successfully improves estimation accuracy of all vehicles. In the two highlighted boxes, we can see that Vehicles~1 and~3 get position improvements from the broadcast given by Vehicle~2. Meanwhile, Vehicle~2 also benefits from the information sharing (at 400~seconds). On the other hand, the localization improvement for Vehicle~1 is less using an NKF. For Vehicles~2 and~3, the localization by NKF is even worse than the single vehicle localization (SKF). 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{ThreeVehiclesCoop}
+\caption{Cooperative localization results with field data. The arrows indicate the time when the broadcasts are sent and successfully received by other vehicles. NKF estimation sometimes is worse than SKF. DEIF improves estimation accuracy of all vehicles.}
+\label{fig:ThreeVehiclesCoop}
+\end{figure}
+
+\section{Summary}
+
+Although underwater communication is difficult, natural behaviors such as fish schooling have shown that limited communication still helps improve the overall performance. We have shown that cooperation under constrained communication make the distributed localization outperform the single-vehicle localization. However, the estimation may degenerate when the packet loss is beyond some point. This is due to the information double counting when the correlation is ignored. We also showed that distributed processing has some information loss even the correlation is exactly known. The reasons of these two will be explored in the next chapter.
+
+With the challenges imposed by the underwater communication, we reported the design and implementation of a distributed extended information filter for cooperative multi-AUV localization. This DEIF is especially suitable for underwater vehicles where the communication links have the problems of limited bandwidth and lossy packets.
+
+Multi-vehicle cooperative localization is essentially a type of data fusion in cooperative intelligent vehicles. Data fusion, which aims at integration of data and knowledge from multiple sources, is an important process to achieve a better estimation in various applications. The proposed filter can also be used for cooperative object tracking, cooperative environment sensing or map building.
+
+When vehicles have precise local measurements and/or infrequent communications, the inter-vehicle correlation may become trivial. In such a case, ignoring correlation in fusion might be able to work. We will discuss this in the next chapter. 

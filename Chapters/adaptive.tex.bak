@@ -1,0 +1,48 @@
+\chapter{Adaptive Navigation with a Cooperative Team}
+\label{ch:others}
+\lhead{Chapter~\ref{ch:others}. \emph{Optimized AUV Positioning and Applications}} % Write in your own chapter title to set the page header
+
+
+\section{Kalman Smoother (KS)}
+\label{subsec:ks}
+
+A Kalman filter (KF) updates the state vector whenever a measurement comes in. The position estimates only depend on the past prediction and measurements. The error of estimates is not reduced until there is a measurement. Kalman smoother (KS) computes back the position estimates of the past state history based on the history of noisy measurements obtained even after the state. It smoothes out the whole trajectory and gives a better estimation on average.
+
+There are two types of KS: \textit{fixed-lag smoother} and \textit{fixed-interval smoother}. The fixed-lag smoothing estimates $\hat{{\bf x}}_{k-N|k}$ for a given fixed-lag $N$ using the measurement ${\bf z}_1$ to ${\bf z}_k$. The fixed-interval estimates $\cap{\bf x}_k|n (k<n)$, also called \textit{Rauch-Tung-Striebel (RTS) smoother} \cite{RTS}, using the measurements from a fixed interval ${\bf z}_1$ to ${\bf z}_n$. Difference??
+
+\subsection{Formulations for Linear and Nonlinear Measurements}
+
+\subsection{Offline Processing Results}
+
+
+
+%\begin{sidewaysfigure}[htbp]
+%\centering
+%\includegraphics[width=1\textwidth]{./Figures/NpointsHC.png}
+%\caption{Hierarchical clustering on N-points with 14 leaf nodes} \label{fig:NpointsHC}
+%\end{sidewaysfigure}
+
+%\begin{table}[htbp]
+%\centering
+%%\begin{singlespace}
+%\begin{tabular}{|m{0.4cm}|m{4.8cm}|m{4.8cm}|m{3cm}|}
+%\hline
+% & \multicolumn{3}{|c|}{Hierarchical clustering on LSDTW} \\ \hline
+% & Description & Misclassified & Error rate $\%$\\ \hline
+% A & Mostly clustered& 3,4,10,23 and 24(B) & 20.8 \\ \hline
+% B & B1 and B2 mixed & 55(A) & 1.6\\ \hline
+%C & Mostly clustered & 80(D) & 4.0 \\ \hline
+%D & Split into 2 sub-groups, one mixed with E & 81(C) and 88(F) & 14.3\\ \hline
+%E & mixed with B,C,D & N.A. & 100\\ \hline
+%F & split into 2 sub-groups & 111-113(B) & 30\\
+%\hline
+%\end{tabular}
+%%\end{singlespace}
+%  \caption{Natural clustering result analysis of LSDTW}
+%  \label{tab:LSDTWhc}
+%\end{table}
+
+
+\section{Image-based method vs. $k$-means}
+\label{subsec:}
+

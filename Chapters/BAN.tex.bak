@@ -1,0 +1,68 @@
+\chapter{Navigation with Bathymetric Aids}
+
+With this example, we have shown that the localization accuracy strongly depends on the path that an AUV takes, if the AUV uses bathymetric-aids for navigation. So how does one select a path that yields good localization?
+
+\section{Path Planning with Bathymetric Aids}
+
+We use approximate dynamic programming to look for optimal path. We define the state as the particle pair set, that is, $S=\{{\bf x}_K^i,q_k^i\}$.  Below is the Bellman Equations tackling our problem.
+\begin{equation}
+\begin{aligned}
+V^*(S)&=\min_{a\in\mathcal{A}}Q^*(S,a) \\
+Q^*(S,a)&=\sum_Tp_t(S\xrightarrow{a}T)V^*(T) \\
+\end{aligned}
+\end{equation}
+where $V*(\cdot)$ is the value of a state $\cdot$ (state $S$ or state $T$ for example). We set the reward value from state $S$ to state $T$ is zero and the discouting factor $\gamma=1$. $p_t(S\xrightarrow{a}T)$ si the transition probability by taking action $a$ for state $S$, and resulting in state $T$. The probability is mainly to take account into the propagation uncertainty (will be figure out later).
+
+We intend to estimate value function using Q-learning but before that, we demonstrate how the value function is calculated for a given path, with deterministic state transition.
+
+\begin{figure}[H]
+\centering
+%\begin{sideways}
+    \includegraphics[width=0.8\textwidth]{Value.png}
+     % \end{sideways}
+            \label{fig:value}
+            \caption{Value function updated on the map, based on Paths 1 to 5 with deterministic propagation.}
+\end{figure}
+
+\textit{Subsequent work}
+\begin{itemize}
+                    \item Incoprating the transition probablity
+                    \item Build up some random paths and value functions
+                    \item Interpolate and update the value function for Q-learning?
+                    \item Others?
+                  \end{itemize}
+
+\subsection{Value Function Using Information Entropy}
+
+
+\begin{figure}[H]
+\begin{center}
+\subfigure[Planned Paths.]{
+\includegraphics[width=.8\textwidth]{planedpaths.png}
+\label{subfig:plannedpaths}
+}
+\subfigure[PF-based entropy along executed paths.]{
+\includegraphics[width=\textwidth]{allpaths.png}
+\label{subfig:allpaths}
+}
+\caption{PF-based entropy along different paths.}
+\label{fig:allpaths}
+\end{center}
+\end{figure}
+
+We examine the PF-based entropy along the paths shown in Figure~\ref{subfig:plannedpaths}. We can see that straight-line path goes through bathymetry with little variation. Therefore the entropy of the PF increases for a long time (100 seconds to 450 seconds). Measurements at every $\delta T=1$ second does not give new information for localization. Path B has significant bathymetry changes along the path. They give similar entropy when reaching the destination, which is also lower than the result given by straight-line path. The PF-based entropy drops significantly at the first half of the path. At the end, the localization uncertainty is lower than the one from straight-line path.
+
+\subsection{Gaussian Process Regression}
+
+Distance between uncertainties
+
+\section{Simulation and Performance}
+
+\subsection{Path Execution}
+
+\subsection{Simulation and Example}
+
+\subsection{Performance Evaluation}
+
+
+\section{Simulation and Performance Evaluation} 

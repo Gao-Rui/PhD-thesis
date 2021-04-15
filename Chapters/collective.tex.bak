@@ -1,0 +1,470 @@
+% Chapter 2
+
+\chapter{Collective Localization}
+\label{ch:collective}
+\lhead{Chapter~\ref{ch:collective}. \emph{Collective Localization}}
+% brief intro of each chapter
+
+
+
+\section{On-board Positioning Sensors}
+
+The sensors are categorized into two by the type of their measurements: \textit{proprioceptive} and \textit{exteroceptive}. The proprioceptive measurements are ... The exteroceptive measurements are ...
+
+\subsection{Proprioceptive measurement}
+%\begin{itemize}
+%\item Broadband short-duration sonar clicks,
+%\item Short-duration broadband pulsed sounds called burst pulse, and
+%\item Narrowband frequency-modulated whistles.
+%\end{itemize}
+
+\subsubsection{(DVL)}
+
+\subsubsection{(IMU)}
+
+\subsubsection{Compass}
+
+A TruePoint\texttrademark compass (HMR3500) is used to measure the $3$-axis orientation, namely, bearing, pitch and roll. The \textit{bearing} measures the relative angle of AUV heading from the north axis clockwise (c.w.) in navigation frame, and hence is also referred as \textit{heading} sometime. An equivalent term is \textit{yaw}, which measures the relative angle of AUV heading from the east axis counterclockwise (c.c.w.).
+
+\subsubsection{Thruster}
+\label{subsec:thrust}
+
+Thrust-induced velocity estimation, thruster model
+
+
+%\begin{figure}[htbp]
+%\begin{center}
+%\subfigure[Original spectrogram]{
+%\includegraphics[width=0.8\textwidth]{./Figures/original85-1.png}
+%\label{fig:original85}
+%}
+%\subfigure[After TSF]{
+%\includegraphics[width=0.8\textwidth]{./Figures/TSF.png}
+%\label{fig:TSF}
+%}
+%\caption{Transient suppression filter (TSF) eliminating the snapping shrimp noise \cite{masterthesis-Asitha}}
+%\label{fig:TSF2fig}
+%\end{center}
+%\end{figure}
+
+\subsection{Exteroceptive measurement}
+
+\subsubsection{Depth sensor}
+
+\subsubsection{Altimeter}
+
+\subsubsection{Underwater acoustics modem}
+
+\subsubsection{Sidescan sonar}
+
+\subsubsection{Forward looking sonar (FLS)}
+
+\section{Basic Estimation Methods for Positioning}
+
+\subsection{Bayesian and MAP}
+
+\subsection{Least Square Estimation (LS)}
+
+\subsection{Minimum Mean-Squared Error Estimation (MMSE)}
+
+\subsection{Linear Estimation}
+
+\subsection{Equivalence of Methods and KF}
+
+\section{Localization Approaches}
+
+\subsection{Dead Reckoning (DR)}
+\label{subsec:dr}
+
+internal sensors measure the status of a AUV with respect to its body-frame
+
+the position of the AUV is updated with respect to an initial position over time by integration of velocity or double integration of acceleration
+
+reference frame and rotation matrix
+
+body-frame, earth-frame, navigation-frame
+
+To get a navigation frame position, body-frame measurements need to be transformed by rotation matrix measured by compass
+
+Disadvantage:
+
+only short term accuracy, risk of long term drift
+
+advantage: no restriction in area
+
+\subsection{Beacon based localization}
+
+LBL, SBL, USBL, moving base line
+
+Beacons are fixed on either sea floor or sea surface
+
+The position of beacons are required to be calibrated accurately
+
+The distance from AUV to these beacons are measured, usually by the time-of-flight (TOF) of the acoustic signals
+
+the position of the AUV is computed from a set of equations consisting of distance measurements from all available beacons
+
+%\begin{equation}
+%
+%\end{equation}
+
+disadvantage:
+
+localization can only be achieved in restricted area due the deployment of these external beacons
+
+Acoustic measurements are affected by speed of sound (which is affected by depth, water temperature, salinity, etc. \cite{Dushaw}) , underwater noise, Doppler phase shift, reflection and scattering of seabed and sea surface, etc.
+
+Beacons on the sea surface may not be stationary
+
+\subsection{Map based localization} % or feature
+
+A priori knowledge such as feature map of seabed is required (or build up the map simultaneously)
+
+Sensor measurements, e.g., sonar or visual sensor are used to match certain area of the feature map
+
+The position of the AUV is determined with respect to the feature map
+
+
+Disadvantages
+Localization can only be achieved in restricted area
+Feature extraction from sonar or visual measurements may not be robust
+Localization may not be available if the seabed is featureless.
+
+\subsection{Simultaneous Localization and Mapping (SLAM)}
+
+\subsection{Cooperative positioning}
+a group of AUVs (more than two members) estimates their own trajectories by making use of both internal and external sensors.
+
+AUVs with poorer self-positioning capability gets aid by the relative measurements (such as ranging, relative position, relative orientation, etc.)
+
+homogenous
+
+heterogenous
+
+
+For example, relative position and orientation can be measured by range-only measurement \cite{Zhou}
+
+
+
+\section{Positioning and Navigation of Single AUV} % Write in your own chapter title
+
+\subsection{Flowchart of Single AUV Localization}
+\label{sec:lda}
+
+\subsection{Current Estimation}
+\label{sec:currentest}
+
+\subsection{Velocity Estimation}
+
+\subsection{Command and Control}
+
+\subsection{Linear and Non-linear filtering}
+
+The dynamic and measurement models of AUV positioning are discussed along with linear and non-linear filtering.
+
+\subsubsection{Kalman Filter}
+
+Let ${\bf x}_k$ be the state vector of AUV at time $k$. With the noise-corrupted measurements, the filtering problem is usually to estimate the AUV kinematic state, namely, position, orientation and speed. In a $3$-dimensional world, the position of AUV is $[x,y,z]^T$ with a reference point $[0,0,0]$ for $x$, $y$ and $z$ directions. Since AUV moves at a low speed (only up to $4$ knots) and in a small area (few kilometers at most), the position at $x$ and $y$ directions can be approximated as the position at east and north in a horizontal plane. This is called a \textit{navigation frame}, while the frame centered at AUV body is called \textit{body frame} (Section~\ref{subsec:dr}). In a left-hand system, the $z$ axis is heading downward. It is hence the depth with a reference at the sea surface. While depth can be measured by depth sensor, we only put the $x$ and $y$ position in the state vector ${\bf x}_k$. In a simplified case, the orientation (heading, pitch and roll) and speed are considered as control input. Hence we have the state vector as the position vector ${\bf x}_k=[x_k,y_k]^T$.
+
+
+
+\subsubsection{EKF}
+
+\subsubsection{Particle Filter}
+
+As discussed in the previous section, if the transition function $f(\cdot)$ and measurement function $h(\cdot)$ are linear, an if both prediction noise ${\bf w}_k$ and measurement noise ${\bf \sigma}_k$ are Gaussian, the Kalman filter (KF) finds the exact Bayesian filtering distribution. If not, KF based methods are a first-order approximation (that is, EKF) or a second-order approximation (UKF in general, which will be discussed later). Particle filter (PF) is used to track a state of interest as it evolves over time, typically with a non-Gaussian and perhaps more complicated PDF.
+
+PF is a suboptimal filter performing sequential Monte Carlo (SMC) estimation based on \textit{particles} representation of the probability densities. Each of the particles are associated with a weight that signifies the quality of that specific particle. An estimate of the state of interest is obtained by the weighted sum of all the particles. The particle filter algorithm is recursive in nature and operates in two phase: \textit{prediction} and \textit{update}.
+
+
+% PF algorithm
+\subsubsection{Unscented Kalman Filter and Other Filters}
+
+Unscented Kalman filter (UKF) \cite{Merwe} is also a MMSE estimator for nonlinear models. It uses a deterministic sampling technique known as the unscented transform to pick a minimal set of sample points (called \textit{sigma points}) around the mean. These sigma points are propagated through the non-linear functions, from which the mean and covariance of the estimate are recovered. When the prediction or update model is highly non-linear, the EKF can give particular poor performance due to the error in linearization. In the contrast, UKF does not
+approximate nonlinear functions ${\bf f}{\bf x}$ and ${\bf h}{\bf x}$. It more accurately captures the true mean and covariance (hence the second order in Taylor series expansion). It also removes the requirement to explicitly calculate Jacobians, which for complex functions can be a difficult task in itself.
+
+Let $n_x$ be the dimension of the state vector $\bf x$. The UKF computes $(2n_x+1)$ sigma points in set ${S}=\{W_i,{\bf
+\chi}^i\}$. The sigma
+points are calculated as follows
+\begin {eqnarray}
+{\bf \chi}^{0}_{k-1|k-1}= {\hat {\bf x}}_{k-1|k-1} \nonumber
+\end {eqnarray}
+\begin {eqnarray}
+{\bf \chi}^{i}_{k-1|k-1}= {\bf \chi}^{0}_{k-1|k-1}+
+(\sqrt{(n_x+\kappa){\bf P}_{k-1|k-1}})_i \nonumber
+\end {eqnarray}
+\begin {eqnarray}
+{\bf \chi}^{i}_{k-1|k-1}={\bf \chi}^{0}_{k-1|k-1}-(\sqrt{(n_x+\kappa){\bf
+P}_{k-1|k-1}})_i \nonumber
+\end {eqnarray}
+\begin{eqnarray}
+W^{s}_0= \kappa/(n_x+\kappa)\nonumber \\
+W^{c}_0=W^{m}_0+(1-\alpha^2+\beta) \nonumber \\
+ W^{s}_i = W^{c}_i=\frac{1}{2(n_x+\kappa)}, \quad i=1,\cdots,2n_x
+\end{eqnarray}
+where $\kappa$ is a scaling parameter and $(\sqrt{(n_x+\kappa){\bf
+P}_{k-1|k-1}})_i$ is the $i$th row or column of the matrix
+square root, $W_i^c$ is the weight for covariance and $W_i^s$ is the weight for state vector, $\alpha$ determines the spread of
+sigma points around state and $\beta$ is used to incorporate prior
+knowledge of the distribution of states. Normal values are $\alpha=10^{-3}$ and $\beta=2$.
+
+With the sigma points and their weights, the predictive state and
+state covariance matrix are calculated as
+\begin {eqnarray}\label{eq:ukfpredictmean}
+{\hat {\bf x}_{k|k-1}}= \sum^{2n_x}_{i=0}W^{m}_i{\bf \chi}^{i}_{k|k-1}
+\end {eqnarray}
+where the sigma points are propagated through the transition function ${\bf f}(\cdot)$
+\begin {eqnarray}
+{\bf \chi}^{i}_{k|k-1}= {\bf f}({\bf \chi}^{i}_{k-1|k-1})
+\end {eqnarray}
+The weighted sigma points are combined to produced the predicted state (Equation~\ref{eq:ukfpredictmean}) and covariance as
+\begin {eqnarray}
+{\bf P}_{k|k-1}=\sum^{2n_x}_{i=0}W^{c}_{i}({\bf
+\chi}^{i}_{k|k-1}-{\hat {\bf x}_{k|k-1}})({\bf \chi}^{i}_{k|k-1}-{\hat
+{\bf x}_{k|k-1}})^T
+\end {eqnarray}
+With measurment ${\bf z}_k$ at time $k$, the updated state and state covariance matrix are given as
+\begin {eqnarray}
+{\hat {\bf x}}_{k|k}={\hat {\bf x}}_{k|k-1}+{\it \bf
+K}_k({\bf z}_k-\hat{{\bf y}}_{k})
+\end {eqnarray}
+\begin {eqnarray}
+{\bf P}_{k|k}={\bf P}_{k|k-1}-{ \bf K}_k{\bf
+P}_{yy}{\bf K}_k^T
+\end {eqnarray}
+where
+\begin {eqnarray}
+{\bf P}_{yy}= \sum^{2n_x}_{i=0}W^{c}_{i}({\bf \gamma}^{i}_{k}-\hat{{\bf
+y}}_{k})({\bf \gamma}^{i}_{k}-\hat{{\bf y}}_{k})^T
+\end {eqnarray}
+\begin {eqnarray}
+{\bf P}_{xy}=\sum^{2n_x}_{i=0}W^{c}_{i}({\bf \chi}^{i}_{k|k-1}-\hat
+{\bf x}_{k|k-1})({\bf \gamma}^{i}_{k}-\hat{{\bf y}}_{k})^T
+\end {eqnarray}
+\begin {eqnarray}
+{\it \bf K}_k = {\bf P}_{xy}{\bf P}^{-1}_{yy}
+\end {eqnarray}
+\begin {eqnarray}
+{\bf \gamma}^{i}_{k}={\bf h}({\bf \chi}^{i}_{k|k-1})
+\end {eqnarray}
+\begin {eqnarray}
+\hat{{\bf y}}_{k}=\sum^{2n_x}_{i=0}W^{m}_{i}{\bf \gamma}^{i}_{k}
+\end {eqnarray}
+
+For special case where the process and measurement noise are purely additive, the computational complexity of the UKF can be reduced. In such a case, the system state need not to be augmented with the noise. this reduces the dimension of the sigma points as well as the total number of sigma points used. The covariances of the noise are incorporated into the state covariance using a simple additive procedure. The complexity of the algorithm is $O(n_{\bf x}^3)$ where $n_{\bf x}$ is the dimension of the (augmented?) state vector $\bf x$
+\subsubsection{IMM-based filtering}
+
+
+\subsection{Cram\'{e}r-Rao Lower Bound}
+% background and intro, PCRB
+The \textit{Cram\'{e}r-Rao lower bound (CRLB)}, also referred as \textit{Cram\'{e}r-Rao bound}, \textit{Cram\'{e}r-Rao inequality} or the \textit{information inequality}, expresses the best achievable error performance for a filtering algorithm.
+
+A \textit{posterior Cram\'{e}r-Rao lower bound (PCRLB)}
+
+\subsubsection{PCRLB formulation and properties}
+
+recursive calculation of the information matrix ${\bf J}_k$ for $k>0$
+
+\begin{equation}
+{\bf J}_{k+1}={\bf D}_k^{22}-{\bf D}_k^{21}({\bf J}_k+{\bf D}_k^11)^{-1}{\bf D}_k^{12}
+\end{equation}
+where
+\begin{equation}
+{\bf D}_k^{11}=
+\end{equation}
+\begin{equation}
+{\bf D}_k^{12}=
+\end{equation}
+\begin{equation}
+{\bf D}_k^{21}=
+\end{equation}
+\begin{equation}
+{\bf D}_k^{22}=
+\end{equation}
+
+\subsubsection{Performance Evaluation}
+
+Before application to any real field trial data, we present a performance comparison of various filtering algorithms of interest. The comparison is based on the Monte-Carlo (MC) simulations and where possible, the CRLB will be used to indicate the best possible performance that one can expect for a given scenario and a set of parameters. In these simulations, several performance metrics are defined for analysis.
+
+Root-mean square error (RMSE)
+
+Efficient parameter $\eta$
+
+\subsubsection{Linear Gaussian filtering}
+In the linear Gaussian case, the Jacobians are the independent of the AUV state: $\tilde{\bf F}_k={\bf F}_k$ and $\tilde{\bf H}_k={\bf H}_k$. Consequently ${\bf D}_k^{11}$, ${\bf D}_k^{12}$ and ${\bf D}_k^{22}$ are deterministic and the expectation operator can be dropped out. Thus we have
+\begin{equation}
+{\bf D}_k^{11}={\bf F}_k^T{\bf Q}_K^{-1}{\bf F}_k
+\end{equation}
+\begin{equation}
+{\bf D}_k^{12}=-{\bf F}_k^T{\bf Q}_k^{-1}
+\end{equation}
+\begin{equation}
+{\bf D}_k^{22}={\bf Q}_k^{-1}+{\bf H}_{k+1}^T{\bf R}_{k+1}^{-1}{\bf H}_{k+1}
+\end{equation}
+The CRLB for the linear Gaussian filtering problem is equivalent to the covariance matrix of the Kalman filter.
+
+A linear Gaussian case (for both update and measurement model) is implemented here. Two AUVs are exchanging relative position as measurement ${\bf z}_k={\bf x}_1-{\bf x}_2$ at every $\delta T=10$ seconds, where ${\bf x}_i$ is the position of AUV $i$ in $x$ and $y$ directions. The range measurement has a zero-mean Gaussian noise of standard deviation $0.1$m. Each AUV is moving randomly at $\delta t=1$ second. Both AUVs have Gaussian process noise of standard deviation $0.01$m/s at $x$ and $y$ directions. A centralized Kalman filter is implemented to estimate the position states of the two AUVs. With state vector $[{\bf x}_1,{\bf x}_2]^T=[x_1,y_1,x_2,y_2]^T$, we have the state transition matrix to be identity matrix, and the matrix for measurement model as
+\begin{equation}
+{\bf H}_k=\left[
+            \begin{array}{cccc}
+              1 & 0 & -1 & 0 \\
+              0 & 1 & 0 & -1 \\
+            \end{array}
+          \right]
+\end{equation}
+
+The CRLB for AUV $i$ at time $k$ is obtained as
+\begin{equation}
+\textbf{CRLB}({\bf x}_{i,k})={\bf J}^{-1}_k[i,i]
+\end{equation}
+
+Figure~\ref{fig:KF2AUV2D_CRLB} shows that the Kalman filtering on AUVs with relative position measurement achieve the lowest error performance established by CRLB. It is also equivalent to the standard deviation of the position estimate, that is, for AUV $i$ in linear Gaussian case,
+\begin{equation}
+\textbf{CRLB}({\bf x}_{i,k})=\sqrt{{\bf P}_k[i,i]}
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.9\textwidth]{./Figures/AUVbasics/KF2AUV2D_CRLB.png}
+\caption{Linear Gaussian case: Distance error of Kalman filter and dead reckoning, compared with standard deviation of estimate covariance and CRLB.}
+\label{fig:KF2AUV2D_CRLB}
+\end{figure}
+
+Figure~\ref{fig:KF2AUV2D_CRLB_10s_errormismatch} shows a result from mismatch in noise modeling. The Kalman filtering and CRLB are not identical. This is because the process noise ${\bf w}_k$ is assumed to be linear Gaussian ${\bf w}_k\sim N(0,{\bf Q}_k)$ whereas the simulation does not generate a linear Gaussian noise. The modeled DVL has standard deviation of $0.2$m/s for heading velocity and $N(0.01,0.01^2)$ for compass measurement (in radius). A simple demo of this noise modeling is shown in Figure~\ref{fig:transition_errormismatch}. 1000 particles are generated to simulate the distribution of possible position with the modeled DVL error. The green ellipse is the covariance matrix estimated from the 1000 particles, centered at the mean position of these particles. We can see that the assumed process noise ${\bf Q}_k$ in red dashed line is much larger than the true covariance. This is the reason why initially Kalman filtering achieves less error than CRLB in Figure~\ref{fig:KF2AUV2D_CRLB_10s_errormismatch}. After a long time, the drift of the mean position estimates (the covariance estimated from particles does not center at the true position) becomes dominant, and hence the Kalman filter error increases fast.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{./Figures/AUVbasics/KF2AUV2D_CRLB_10s_errormismatch.png}
+\caption{Mismatch in noise modeling: Distance error of Kalman filter and dead reckoning, compared with standard deviation of estimate covariance and CRLB.}
+\label{fig:KF2AUV2D_CRLB_10s_errormismatch}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{./Figures/AUVbasics/transition_errormismatch.png}
+\caption{A demo on mismatch in transition noise}
+\label{fig:transition_errormismatch}
+\end{figure}
+
+It is interesting to see that, even the estimate modeling does not follows the true situation, Kalman filter still achieves some improvement. (Where to quote and how to-say)
+
+To minimize the other affecting factors in our simulation, we always assume an accurate modeling.
+\subsection{Non-linear Gaussian filtering}
+
+When predict and/or measurement model is non-linear, EKF is not able to guarantee an optimal result. This is because the covariance is propagated through linearization of the underlying non-linear model.
+
+result prediction: EKF should be fast but not reliable. There is significant bias in the position estimates. UKF and PF should be similar. They are unbiased and close to CRLB. PF should be better than UKF, but calculates slower. (The divergence problems in EKF can be avoided using static multiple model estimator??)
+
+
+% Chapter 3
+
+\section{Cooperative positioning by a beacon AUV using range-only measurement (ROM)} % Write in your own chapter title
+%\label{ch:cooperative2}
+%\lhead{Chapter~\ref{ch:cooperative2}. \emph{Feature Vectors and Similarity Measurement}}
+
+
+
+\subsection{Position Estimation of Survey AUV}
+\label{sec:coop2survey}
+
+Details is in single AUV positioning
+
+The survey AUV is usually equipped with sensors scanning the sea environment. For example, the survey AUV uses sidescan sonar payload is for seafloor imaging, or the LEDIF sensor for payload developed by CENSAM for chemical sensing \cite{}. The survey AUV is usually equipped with poor navigation sensors. For example, the position of survey AUV is estimated with dead reckoning (DR) by thruster-induced velocities. To bound the position error by DR, the range between the survey AUV and a beacon AUV is measured by the travel time of acoustic signals to aid the positioning of the survey AUV.
+
+Let the state vector of survey AUV consist of its position at east ($x$)and north ($y$) directions, we have ${\bf x}_k=[x_k,y_k]^T$ at time $k$. With time interval $\delta t=t_{k+1}-t_k$ and body-frame velocities estimated from thruster model (Section~\ref{subsec:thrust}) and current estimation if available (Section~\ref{sec:currentest}), the state transition is
+\begin{equation}
+\label{eq:predicEKF}
+{\bf x}_{k|k-1}={\bf x}_{k-1|k-1}+{\bf R}_{k-1}{\bf v}_{b,k-1}\delta t+{\bf w}_{k-1}
+\end{equation}
+It is expanded to be
+\begin{equation}
+\left[\begin{array}{c}
+  x \\
+  y \end{array}\right]_{k|k-1} =\left[\begin{array}{c}
+  x \\
+  y\end{array} \right]_{k-1|k-1}+{\bf R}_{k-1}\left[\begin{array}{c}
+  v_{x,b} \\
+  v_{y,b} \end{array}\right]_{k|k-1}\delta t+{\bf w}_{k-1}
+\end{equation}
+
+\noindent Hence the state transition matrix ${\bf F}_k$ is define as
+\begin{equation}
+{\bf F}_k = \left[
+              \begin{array}{cc}
+                1 & 0 \\
+                0 & 1 \\
+              \end{array}
+            \right]
+\end{equation}
+
+We denote $\hat{\bf x}_k$ as the position estimate via the prediction model in Equation~\ref{eq:predicEKF}. In this dynamic model, the estimated error covariance matrix $\mathbf{\hat{P}}$ is predicted as:
+\begin{equation}
+\setcounter{equation}{6}
+\mathbf{\hat{P}}_{k+1|k}=\mathbf{\hat{P}}_{k}+\mathbf{Q}_{k}
+\end{equation}
+where the process noise is assumed to be Gaussian ${\bf w}_k\sim N(0,{\bf Q}_k)$.
+
+The range measurement $z_k$ has a measurement model and expression respectively as
+\begin{equation}
+z_k={\bf h}({\bf x}_{k|k-1})+\sigma_k
+\end{equation}
+where $\sigma_k$ is the range measurement noise at time $k$ (assumed Gaussian $\sigma_k\sim N(0,{\bf R}_k))$ and function ${\bf h}(\cdot)$ is
+\begin{equation}
+{\bf h}({\bf x}_{k|k-1})=\sqrt{(x_{k|k-1}-x_k^B)^2+(y_{k|k-1}-y_k^B)^2}
+\end{equation}
+where ${\bf x}_k^B=[x_k^B,y_k^B]^T$ is the position of the beacon AUV at time $k$. The linearized measurement matrix is approximated by the Jacobian matrix
+\begin{eqnarray}
+\mathbf{H}_{k}=\frac{\partial h}{\partial \mathbf{x}}|\mathbf{\hat{x}}_{k|k-1}\\
+= \frac {(\mathbf{\hat x}_{k|k-1}-\mathbf{x}^{B}_{k})^{T}}{\|\mathbf{\hat{x}}_{k|k-1}-\mathbf{x}^{B}_{k}\|}\nonumber
+\end{eqnarray}
+When the range measurement at time step $k$ becomes available, we combine the measurement with the estimate $\hat{\bf{x}}_{k|k-1}$ to give use $\hat{\bf x}_{k|k}$. The position state vector of survey AUV is updated as:
+\begin{equation}
+\mathbf{\hat{x}}_{k|k}=\mathbf{\hat{x}}_{k|k-1}+\mathbf{K}_{k}\tilde{y}_{k}
+\end{equation}
+where $\mathbf{K}_{k}$ is the optimal Kalman gain and $\tilde{y}_{k}$ is the measurement residual between the measured and predicted ranges between the two AUVs.
+\begin{equation}
+\tilde{y}_{k}=z_{k}-\|\mathbf{\hat{x}}_{k|k-1}-\mathbf{x}^{B}_{k}\|
+\end{equation}
+\begin{equation}
+\mathbf{S}_{k}=\mathbf{H}_{k}\mathbf{\hat{P}}_{k|k-1}\mathbf{H}_{k}^{T}+\mathbf{R}_{k}
+\end{equation}
+\begin{equation}
+\mathbf{K}_{k}=\mathbf{\hat{P}}_{k|k-1}\mathbf{H}_{k}^{T}\mathbf{S}_{k}^{-1}
+\end{equation}
+The error estimate at time $k$ is updated as:
+\begin{equation}
+\mathbf{\hat{P}}_{k}=(\mathbf{\textit{I}}-\mathbf{K}_{k}\mathbf{H}_{k})\mathbf{\hat{P}}_{k|k-1}
+\end{equation}
+Typically the depth of AUV is specified in a mission and not altered by the path planning algorithm. The depth sensor and altimeter are used to measure the vehicle depth. Therefore in this paper we only display the 2-dimensional positioning.
+
+\subsection{Path Planning for Beacon AUV}
+\label{sec:coop2beacon}
+Beacon AUV
+
+%\begin{figure}[htbp]
+%\centering
+%\includegraphics[width=\textwidth]{./Figures/plot_polyfit_data.png}
+%\caption{Group plot of $20$-points feature from whistle TFRs after polynomial fit, frequency is shifted by the mean of the beginning and ending frequencies and scaled by its bandwidth.} \label{fig:TFRsplot}
+%\end{figure}
+
+
+%\begin{equation}\label{eq:cents}
+%f_{cents}=1200\log _2{\frac{f}{f_{ref}}}.
+%\end{equation}
+
+\subsection{Simulations and CRLB Analysis}
+
+sampling interval/measurement update rate
+
+relative position
+
+\subsection{Experiment Results and Discussion}
+\subsubsection{Comparison simulations for 1 Survey AUV}
+
+\subsubsection{For more survey AUVs}
+\label{sec:coop2exp}
+
+
+
+\section{Project Outline}
+

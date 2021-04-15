@@ -1,0 +1,329 @@
+\chapter{Localization with Bathymetric Aids}
+\label{ch:bathymetry}
+\lhead{Chapter~\ref{ch:bathymetry}. \emph{Localization with Bathymetric Aids}}
+
+
+\section{Problem Statement}
+
+Chapter~\ref{ch:naive} shows that cooperative localization with bathymetric aids can ignore the correlation when fusing information from range updates. With this justification, we proceed to explore the bathymetry-aided navigation on a single vehicle. This can be safely extended to cooperative navigation of multiple vehicles. The first work investigates how the bathymetric terrain map benefits the localization. As many works have claimed that the localization performance highly depends on the bathymetry variation \cite{Kalyan2013,Peng2016,Rodrigo2015,Galceran2013}, we justify this assumption through a careful analysis. It is again proved that the advantage of bathymetric aids is path dependent. However the bathymetry variation is not a sufficient condition for a good localization. A concept of information entropy map, is formulated and used in Chapter~\ref{ch:ban} later as an evaluation metric in path planning.
+
+The work in this chapter and Chapter~\ref{ch:ban} was published in~\cite{Gao2018}.
+
+\section{Probability Map Based Localization}
+
+We denote the entire location space at time $k$ as ${\bf{X}}_k$. $\text{Bel}({\bf{X}}_k=x)$ denotes the vehicle's belief that it is at the location $x$ at time $k$. The action ${\bf{a}}_k$ denotes the action taken at time step $k$ towards the next step $k+1$, and ${\bf{A}}_{1:k}\doteq\{{\bf{a}}_1,{\bf{a}}_2,...,{\bf{a}}_k\}$. The same definition and notation apply
+to the sensing data ${\bf{y}}_k$. Markov process assumes that given the present state, the future and past states are independent. In formal terms, it is stated
+\begin{equation}
+{P}({\bf x}_k|{\bf x}_0,...,{\bf x}_{k-1},{\bf a}_0,...,{\bf a}_{k-1},{\bf zS}_0,...,{\bf z}_{k},)={P}({\bf x}_k|{\bf x}_{k-1},{\bf a}_{k-1}).
+\end{equation}
+This only works if the environment is static and does not change with time \cite{Thrun2005}. Kalman filter described in the previous chapter is one of the common methods used. However, Kalman filter assumes Gaussian noises in estimation and measurements. It does not perform well for situations where the models are nonlinear or the belief is multimodal. For example, a vehicle moving along the ridge of a hill may arrive at a belief that has two peaks at its two sides. In such situations, filters with non-parametric representation can give better description.
+
+Two types of localization methods are introduced in the subsequent sections - grid-based Markove localization and particle filtering. We examine the effect of bathymetry aids on localization. This includes how the bathymetry affects the localization belief, which estimation filter should be used, and how the localization performance should be quantified. %Two types of non-parametric localization are investigated in this section: grid-based Markov localization and Monte Carlo localization.
+
+\subsection{Grid-Based Markov Localization}
+
+% source code: C:\Users\tmsgr\Dropbox\Gao Rui JL_GR\PhD progress\BAN2\St.John - main_Markov.m
+The grid-based localization uses a histogram to represent the belief distribution in map grids. We use the algorithm in \cite{dieter1999} to simulate the grid-based Markov localization near St John's Island, Singapore. We assume that we have no idea where the vehicle is at the beginning, and hence we initialize a uniform prior distribution in this area. The grid-based Markov localization has the ability to represent situations where the position of the vehicle is held by multiple, distinct beliefs. The probability could be any form instead of single Gaussian. It also caters to the situation where the initial position is unknown.
+
+There are two steps in the Markov localization: action (propagation) and sensing (observation). The corresponding estimation is to predict and update the belief. The uncertainty in the prediction smooths out the location possibility while the observation for update reinforces the places which have similar water depth (bathymetry) as measured. The resolution of the surveyed bathymetry restricts the accuracy of positioning. The computation load is comparable to the grid map resolution and is fairly high. In the St John's map, for example, we have an area of 936 meters by 349 meters, with 1 meter resolution, giving a total of $326664$ grids, of which $192956$ grids are underwater.
+
+\begin{figure}[htbp]
+\centering
+%\begin{sideways}
+    \includegraphics{./Figures/Bathy_path.png}
+     % \end{sideways}
+            \caption{Bathymetry map near St. John Island, Singapore. Circles: Path 1 (Speed 2 m/s). Crosses: Path 2 (Speed 1.41m/s).}
+                        \label{fig:Bathy_path}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\subfigure[Path 1.]{
+\includegraphics[width=\textwidth]{./Figures/all.png}
+\label{subfig:path1}
+}
+\subfigure[Path 2.]{
+\includegraphics[width=\textwidth]{./Figures/all2.png}
+\label{subfig:path2}
+}
+\caption{Grid-based Markov localization with measurement updates. Yellow crosses: top 5 possible locations. Cyan circles: true path. Green square: estimated locations with top possibility.}
+            %\end{sideways}
+              \label{fig:all}
+\end{figure}
+
+\begin{figure}[htbp]
+\begin{center}
+\subfigure[Path 1.]{
+\includegraphics[width=0.45\textwidth]{./Figures/depth1.png}
+\label{subfig:depth1}
+}
+\subfigure[Path 2.]{
+\includegraphics[width=0.45\textwidth]{./Figures/depth2.png}
+\label{subfig:depth2}
+}
+\caption{Depth measurements along two paths.}
+            %\end{sideways}
+              \label{fig:depth}
+\end{center}
+\end{figure}
+
+Figure~\ref{fig:Bathy_path} shows two test paths on the bathymetry map. The simulation assumes of odometric error of 1 meter per second in standard deviation, and measurement error of 0.1 meters in standard deviation. There is a measurement every other 15 seconds. Both start with uniform beliefs on the vehicle location over the map. The decision of the position by the top beliefs at initial few measurements is mostly incorrect as there could be many locations with similar top probability. Multiple hypotheses on the location appears. With more bathymetry measurements (from left to right in Figure~\ref{fig:all}), the probability is updated from multiple peaks or ridges to eventually a single peak. The decision on the estimated position converges. However Path 2 localization converges from the second depth measurement onward, whereas Path 1 localization only converges at the 4th measurement. In terms of bathymetry variations along the path, Path 1 has more variations as shown in Figure~\ref{fig:depth}. The underwater topology variations (richness of features) on the path are closely related to the positioning performance. The sparser the underwater topology, the less effective are bathymetry aids to localization. However bathymetry variation is not the sufficient or necessary condition for a good localization. The uniqueness of the measured depth compared with the bathymetry in the prior belief decides the localization performance. Multiple AUVs with cooperation are able to extract more uniqueness in the feature space.
+
+\subsection{Particle Filtering and Multiple Hypotheses}
+
+At time step $k$ the particle filter gives the particle set
+\begin{equation}
+\{{\bf x}_k^{(i)},q_k^{(i)}\}
+\end{equation}
+where $q_k^{(i)}$ is the weight for particle $i$ at position ${\bf x}_k^{(i)}$ and $\sum_{i=1}^Nq_k^{(i)}=1$. The computation of PF is determined by the number of particles used. Figure~\ref{fig:all_PF} shows the corresponding PF estimation on Path 1. The density of the particles cannot be seen due to the overlapping of the particles. However it gives similar result as Figure~\ref{subfig:path1} with less computation load (5000 particles).
+
+\begin{figure}[htpb]
+\centering
+    \includegraphics[width=\textwidth]{./Figures/all_PF.png}
+            \caption{Particle filter localization with measurement updates for Path 1. Black circles: true path. Cyan regions: distribution of particles.}
+                        \label{fig:all_PF}
+\end{figure}
+
+We model the particles with  Gaussian mixture model (GMM) using Expectation Maximization (EM) method \cite{Bishopbook}. Classifying the particles is essentially a clustering problem. A Gaussian Mixture consists of a linear superposition of Gaussians
+\begin{equation}
+    p({\bf x})=\sum_{i=1}^K\lambda_i\mathcal{N}({\bf x}|{\bf\mu}_i,{\bf \Sigma}_i)
+\end{equation}
+where $\sum_{i=1}^K\lambda_i=1$ are the mixing coefficients and $K$ is the number of Gaussians. EM is a recursive method to maximize the likelihood function with respect to the parameters comprising the means and covariances of the Gaussians and the mixing coefficients. Considering the mixing coefficients as prior probabilities for the particles, for a given value `${\bf x}$', we evaluate the corresponding posterior probabilities, also called \textit{responsibilities}:
+\begin{equation}
+\begin{split}
+    \gamma_i({\bf x})&=p(i|{\bf x}) \\
+    &=\frac{p(i)p({\bf x}|i)}{p(\bf x)}\\
+    &=\frac{\lambda_i\mathcal{N}({\bf x}|{\bf\mu}_i,{\bf \Sigma}_i)}{\sum_{j=1}^K\lambda_j\mathcal{N}({\bf x}|{\bf\mu}_j,{\bf \Sigma}_j)}. \\
+\end{split}
+\end{equation}
+When $N_i$ particles are assigned to the $i$the particles, we have $\lambda_i=\frac{N_i}{N}$.
+
+In each iteration, $\gamma_i({\bf x})$ is evaluated and the parameters are re-estimated. With the new estimated parameters, the log likelihood $\ln p({\bf x}|{\bf \mu},{\bf\Sigma},{\lambda})$ can be evaluated. The iteration stops when there is convergence or maximum number of iterations is reached.
+
+\begin{figure}[htbp]
+\begin{center}
+\subfigure[Step 45.]{
+\includegraphics[width=0.8\textwidth]{./Figures/step30.png}
+\label{subfig:EM1}
+}
+\subfigure[Step 60.]{
+\includegraphics[width=0.8\textwidth]{./Figures/step60.png}
+\label{subfig:EM2}
+}
+\caption{Gaussian mixture model estimated by EM method.}
+\label{fig:GMMEM}
+\end{center}
+\end{figure}
+
+Figure~\ref{fig:GMMEM} shows two examples of the Gaussian mixtures estimated by EM method. Each cluster is plotted in different colors, with the mean in black square and error covariance in black ellipses. When particles form multiple clusters, GMM is more representative. When particles form fewer clusters, the number of particles affects the calculation and estimation performance. 
+
+Generally, the Gaussian mixture model for multiple hypothesis increases the computation in modeling. The individual Gaussian model is also not very representative. Overally prediction and update with multiple Gaussian does not give much advantage compared with particle filter itself.
+
+\section{Information Entropy Map}
+
+In the previous section, we have demonstrated that with bathymetric measurements incorporated into localization, the \textit{a posteriori} description of the location uncertainty is often poorly described by a Gaussian distribution. Multimodal distributions may arise when the location uncertainty is bifurcated at bathymetric ridges. Particle filter (PF) is used as a flexible tool to represent general densities. However, the traditional evaluation measures such as error of estimated mean and estimated error covariance are only suitable for single Gaussian-distribution cases \cite{Chou2011}. Gaussian mixture model has the problem with varying optimal number of Gaussians. 
+
+We adopt information entropy measure to characterize the estimation uncertainty, which does not require parametric estimation of the position. This section introduces two types of information entropy measures for filtering uncertainty - the grid-based discrete entropy and PF-based entropy. Both display similar trends in describing the estimation uncertainty. We will illustrate the entropy values along different paths.
+
+\subsection{Grid-based Discrete Entropy}
+
+From a mathematical perspective, the calculation of entropy is based on the probability of all possible outcomes. However for particle filter localization, simply counting the probability (weights) of particles for discrete entropy will result in loss of location and dispersion information. Particles have to be related to geographical location. One way is to count the number of particles in the map grids. We calculate the discrete entropy of the vehicle position estimation
+\begin{equation}
+H({\bf X})=-\sum_{i=1}^{MN}P({\bf x}_i)\log P({\bf x}_i)
+\end{equation}
+where $M$ and $N$ are the number of grids in longitude and latitude directions, $i$ is the index of grid up from $1$ to $MN$. $P({\bf x}_i)$ is the probability mass function at $i$th grid centered at position ${\bf x}_i$ and $\sum_i^{MN}P({\bf x}_i)=1$. $P({\bf x}_i)$ is obtained by summing the weights of particles which fall into the $i$th grid. In the case of $P({\bf x}_i)=0$ for some $i$, the value of $0\log 0$ is defined to be 0.
+
+The entropy value defines the uncertainty (or uniqueness in the other way) of the localization on a grid map. When there are a few grids with high probability while the rest of the grids have low probability, the entropy value is small. Therefore the filter has less uncertainty about vehicle's location because the vehicle most likely falls into one of the few grids with high probability. If most grids have equal probability, the filter is more uncertain where the vehicle is located. %The more grids with similar probability, the more uncertain the filter is about where the vehicle is.
+
+The next information for localization comes from the observed water depth. As mentioned before, this is in fact a sum of two measurements - the vehicle depth (the depth from the sea surface to the vehicle) and the altitude (the depth from vehicle to sea bottom). The single-point water depth measurement $z$ is assumed to be corrupted with zero-mean Gaussian noise ${z}_k=h_k({\bf x}_x)+{\bf\nu}_k$ and ${\bf\nu}_k\sim\mathcal{N}(0,{\bf R})$.  Comparing with the bathymetry map in records, the localization can be refined.
+
+Let the water depth variable be $Z$. With all the bathymetry map readings, we can find $P({\bf Z}|{\bf X})$ for all possible values $(z,{\bf x})$, and subsequently we obtain $P(z)=\sum_{\bf x}P(z|{\bf x})$. According to Bayes Theorem, we have
+\begin{equation}
+P({\bf x}|z)=\frac{P(z|{\bf x})P({\bf x})}{P(z)}
+\end{equation}
+and therefore the conditional entropy is
+\begin{equation}
+H({\bf X}|{\bf Z})=\sum_{{ z}_i} p({ z}_i)H({\bf X}|Z={ z}_i).
+\end{equation}
+
+The conditional entropy $H({\bf X}|{\bf Z})$ tells on average how much localization uncertainly is left after observing the water depth within an area. The reduced amount is the mutual information $I({\bf X};{\bf Z})$ provided by prior about the location $\bf X$ and bathymetry information $\bf Z$. We can also calculate the conditional entropy when a single measurement is made, that is $H({\bf X}|Z=z)$.
+
+It should be noted that the accuracy of discrete entropy depends on the size of the map grid (map resolution). An extreme example is when all particles fall into one grid in the map, the discrete entropy falls to a minimum value - zero. Meanwhile, number of particles in the filter is also critical to the accuracy of discrete entropy. To avoid the discretization error from particle filter, bivariate kernel density \cite{botev2010} is first used to estimate the distribution. Then the discrete distribution is interpolated and normalized on the map grids.
+
+\subsection{Particle Filter Based Entropy}
+
+For dynamic model and measurement model described in Equations~\eqref{eq:propagation}~and~\eqref{eq:measurement}, the entropy in a running particle filter has been derived in \cite{Bpers2010} as
+\begin{equation}
+\begin{aligned}
+\label{eq:PFentropy}
+H\left(p({\bf x}_k|Z_{1:k}))\right)&\approx \log\left(\sum_{i=1}^Np(z_k|{\bf x}_k^i)q_{k-1}^i\right) \\
+-\sum_{i=1}^N&\log\left(p(z_k|{\bf x}_k^i)(\sum_{j=1}^Np({\bf x}_k^i|{\bf x}_{k-1}^j)q_{k-1}^j)\right)q_k^i,
+\end{aligned}
+\end{equation}
+where $Z_{1:k}=\{z_1,z_2,\ldots,z_k\}$ includes the measurements in history up to time step $k$. $p({\bf x}_k|Z_k)$ is the posterior distribution after the series of bathymetry measurements.
+
+As measurements may not be available at every step, we derive the entropy in predicting vehicle position from time step $k-1$ to $k$. ${\bf x}^i_{k|k-1}$ denotes the predicted position of the $i$th particle in particle set. $q^i_{k|k-1}$ is the associated particle weight. The probability distribution at the predicted stage represented by PF is
+%\begin{equation}
+%p({\bf x}_k|Y_{1:k})\approx\sum_{i=1}^Nq_k^i\delta({\bf x}-{\bf x}_k^i)
+%\end{equation}
+\begin{equation}
+p({\bf x}_k|Z_{1:k-1})\approx\sum_{i=1}^Nq^i_{k|k-1}\delta({\bf x}-{\bf x}^i_{k|k-1} ).
+\end{equation}
+The weak convergence law for PF states that
+\begin{equation}
+\lim_{N\rightarrow\infty}\sum_{i=1}^Ng({\bf x}^i_{k|k-1} )q^i_{k|k-1}=\int_{\mathcal{X}}g({\bf x}_k)p({\bf x}_k|Z_{1:k-1})d{\bf x}_k.
+\end{equation}
+Therefore the entropy is
+\begin{equation}
+\begin{aligned}
+H\left(p({\bf x}_k|Z_{1:k-1})\right)&=-\int_{\mathcal{X}}\log p({\bf x}_k|Z_{1:k-1})p({\bf x}_k|Z_{1:k-1})d{\bf x}_k \\
+&=-\lim_{N\rightarrow\infty}\sum_{i=1}^N \log p({\bf x}_{k|k-1}^i |Z_{1:k-1})q_{k|k-1}^i \\
+&=-\lim_{N\rightarrow\infty}\sum_{i=1}^N \log\left(\lim_{N\rightarrow\infty}\sum_{j=1}^Np({\bf x}^i_{k|k-1}|{\bf x}_{k-1}^j)q_{k-1}^j\right)q_{k|k-1}^i \\
+&\approx-\sum_{i=1}^N \log\left(\sum_{j=1}^Np({\bf x}^i_{k|k-1}|{\bf x}_{k-1}^j )q_{k-1}^j\right)q_{k|k-1}^i. \\
+\end{aligned}
+\end{equation}
+It can be seen that this is equivalent to the PF-entropy approximation in Equation~\eqref{eq:PFentropy} when $p(z_k|x_k^i)=1$. It is equivalent to an observation which provides no information updating the distribution.
+
+\subsection{Empirical Convergence and Contributing Factors}
+
+%The approximation performance is affected by the number of particles used and the dimension of the state. We will investigate the effect and give solutions accordingly.
+
+A simple random walk process is used to illustrate the grid-based entropy and PF-based entropy. The measurement is observed position with additive Gaussian noise. A standard Kalman filter tracks the estimated covariance and therefore the theoretical entropy of the Gaussian distribution $H=\frac{1}{2}\log\{(2\pi e)\det{{\Sigma}} \}$ is calculated as benchmark. Figure~\ref{fig:StdError} shows the standard deviation error with two different initial errors.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.6\textwidth]{StdError.png}
+\caption{Gaussian random walk process: Estimation error is reduced at every measurement update.}
+\label{fig:StdError}
+\end{figure}
+\begin{figure}[!t]
+\begin{center}
+\subfigure[]{
+\includegraphics[width=.47\textwidth]{P1000E100.png}
+\label{fig:P1000E100}
+}
+\subfigure[]{
+\includegraphics[width=.47\textwidth]{P1000E300.png}
+\label{fig:P1000E300}
+}
+\subfigure[]{
+\includegraphics[width=.47\textwidth]{P6000E100.png}
+\label{fig:P6000E100}
+}
+\subfigure[]{
+\includegraphics[width=.47\textwidth]{P6000E300.png}
+\label{fig:P6000E300}
+}
+\subfigure[]{
+\includegraphics[width=.47\textwidth]{P11000E100.png}
+\label{fig:P11000E100}
+}
+\subfigure[]{
+\includegraphics[width=.47\textwidth]{P11000E300.png}
+\label{fig:P11000E300}
+}
+\caption{Gaussian random walk process: PF-based Entropy and grid-based discrete entropy, versus theoretical entropy. Vertical red lines: time steps when measurements are available. Vertical green dashed lines: time steps when particles are resampled. Grid-based entropy is more sensitive to particle numbers and estimation error values.}
+\label{fig:convergence2Dexample}
+\end{center}
+\end{figure}
+
+Figure~\ref{fig:convergence2Dexample} shows PF-based entropy is almost identical to the theoretical entropy, except when number of particle is only 1000 (Figure~\ref{fig:P1000E100} and~\ref{fig:P1000E300}). Grid-based discrete entropy has different values but the same trend as the estimation error. Both entropy values drop with the estimation error reduction from measurement update. Resampling of particles does not affect PF-based entropy. This is because PF-based entropy is calculated based on the transition and weight update of each particle and resampling happens after that if needed. Resampling of particles affect the performance of Grid-based discrete entropy. This is because resampling is necessary as the first step for the kernel density estimation for the discrete entropy.
+
+The advantage of grid-based discrete entropy is that it can be used to calculate the average conditional entropy $H({\bf X}|{\bf Z})$. $H({\bf X}|{\bf Z})$ can be used to describe the effectiveness of a bathymetry map based on a particular prior knowledge. The drawback is that the accuracy depends on the grid size as the bin weights are obtained by including particles which fall into the same grid. Under-estimation of entropy occurs when either the prior or number of particle is small. For example, with the same initial error, grid-based discrete entropy values are different with different number of particles (comparing each column of Figure~\ref{fig:convergence2Dexample}). This is because a smaller number of particles is insufficient to fully describe larger estimation error.  In the other hand, PF-based entropy only calculates the conditional entropy $H({\bf X}|{\bf Z}=z)$ with a specific observation but it is generally more stable with respect to particle numbers and prior knowledge. It is an approximation of the entropy of probability density function (PDF) using probability mass function (PMF). For PF-based entropy, the variation is only more obvious when the estimation error is larger and number of particles is relatively small (Figure~\ref{fig:P1000E100}~and~\ref{fig:P1000E300}). 
+
+
+
+\begin{figure}[htbp]
+\begin{center}
+\subfigure[A non-Gaussian distribution after observation (Particle Numbers = 11000): particle distribution highly depends on the bathymetry map.]{
+\includegraphics[width=0.5\linewidth]{Particles.png}
+\label{subfig:NumOfParticles2}
+}
+\subfigure[Entropy Boxplot: PF-based entropy versus grid-based entropy in the same range. Grid-based entropy has larger variation in the median of the entropy values.]{
+\includegraphics[width=0.9\linewidth]{ParticlesCompare.png}
+\label{subfig:NumOfParticles}
+}
+\caption{PF-based entropy versus grid-based discrete entropy: Grid-based discrete entropy varies more, with respect to particle number.}
+\label{fig:NumOfParticls}
+\end{center}
+\end{figure}
+
+An example of the effect of particle number with bathymetry observations is shown in Figure~\ref{fig:NumOfParticls}. With particle numbers varying from 500 to 11000, the grid-based discrete entropy has larger variation of the median value in red line than the PF-based entropy. It also gives more outliers. This means grid-based entropy is more sensitive to the particle numbers.
+
+\subsection{Localization Performance}
+
+% PFbasedentropy.m
+
+\begin{figure}[htbp]
+\begin{center}
+\subfigure[Two different paths (A and B) from the same starting point (SP) to the destination point (DP).]{
+  \includegraphics[width=.7\linewidth]{PathAB.png}
+  \label{subfig:plannedpaths}
+}
+\subfigure[Entropy of the particle filter for paths A and B shown in (a).]{
+  \includegraphics[width=.7\linewidth]{PathABentropy.png}
+  \label{subfig:pathAB}
+}
+\caption{The entropy of the particles in a bathymetric navigation particle filter depends on the path taken from source to destination.}
+\label{fig:allpaths}
+\end{center}
+\end{figure}
+
+With the comparison from previous section, we use PF-based entropy as the localization uncertainty measure. We examine the PF-based entropy along two paths shown in Figure~\ref{subfig:plannedpaths}. Both paths have the same large initial uncertainty. Bathymetric measurements made at every 10 seconds help reduce the localization uncertainty initially for both paths. Straight-line path A goes through a flat area with little bathymetry variation. The entropy of localization uncertainty increases from roughly the 200th second. Path B takes a detour and therefore longer time to reach the destination. Without bathymetric information, the vehicle would incur a larger uncertainty for longer missions due to error accumulation in pure dead reckoning. With bathymetric information, the PF-based entropy decreases rapidly as the vehicle moves along the area with significant bathymetric variability. The significant variation along path B makes the measured bathymetry unique and therefore improves localization accuracy. At the destination, Path B has a smaller entropy compared with Path A.
+
+\begin{figure}[thbp]
+\begin{center}
+\subfigure[When vehicle reaches the destination, the localization error and the covariance are much larger for Path A than that for Path B.]{
+  \includegraphics[width=.7\linewidth]{pathABerror.png}
+  \label{subfig:pathABerror}
+}
+\subfigure[Localization error along Path A is also larger than that along Path B.]{
+  \includegraphics[width=.7\linewidth]{pathABerror2.png}
+  \label{subfig:pathABerror2}
+}
+\caption{Although Path B takes a detour and therefore longer time to reach the destination, the localization error of Path B is much smaller than a that of a straight line by Path A.}
+\label{fig:SimulationPathAB}
+\end{center}
+\end{figure}
+
+In Figure~\ref{subfig:pathABerror2}, the root-mean-squared errors along Path A and B over 50 runs are plotted. As the mission time for each run is different, time is scaled to the percentage of the total mission time. The localization error has the same trend of the PF-entropy in Figure~\ref{subfig:pathAB}. Figure~\ref{subfig:pathABerror} shows the localization error when the vehicle reaches the destination. 
+
+With this example, we have shown that the localization performance can be evaluated using information entropy measure. We also show that paths with different bathymetry give different localization results.
+
+\subsection{Information Entropy Map Based on Different Priors}
+
+The intuitive way is to select the path with the most bathymetry variability in the map. However, is bathymetry variability the sufficient condition for optimal localization? we answer this question in this section by examining the information entropy map.%The bathymetry variation has to be evaluated within a range. To be specifically, a prior that the filter knows about the location.
+
+Discrete conditional entropy is first used to evaluate the effect of the information that the local bathymetry provides. Given a prior distribution, the conditional entropy $H({\bf X}|{\bf Z})$ and mutual information $I({\bf X};{\bf Z})$ of three areas are calculated. Among the three areas in Figure~\ref{subfig:uniformPrior}, Square 3 has the smallest bathymetry variation. With uniform prior, Square 3 shows the smallest mutual information and largest conditional entropy. In the other hand, Square 1 has the smallest conditional entropy. On average, bathymetry measurements help improve the localization accuracy most for Square 1.
+
+If the prior is Gaussian-distributed and centered at top left (Figure~\ref{subfig:GassianPrior}), Square 2 outperforms Square 1 as the bathymetry variation at the top left is larger for Square 2. Mutual information between the prior and measurement is therefore the most in Square 2 compared with Square 1 and 3. When Gaussian prior is centered at bottom left, Square 2 gives smallest mutual information as the bottom left topology is almost flat.
+
+\begin{figure}[htbp]
+\begin{center}
+\subfigure[Conditional entropy of three different areas with uniform prior.]{
+  \includegraphics[width=\linewidth]{ConditionalEntropyUniform.png}
+  \label{subfig:uniformPrior}
+}
+\subfigure[Conditional entropy with different Gaussian priors.]{
+  \includegraphics[width=\linewidth]{Figures/ConditionalEntropyGaussian.png}
+  \label{subfig:GassianPrior}
+}
+\caption{Information entropy map for different areas: Different prior distributions yield different conditional entropy values.}
+\label{fig:conditionalEntropy}
+\end{center}
+\end{figure}
+
+The examples with different priors show that the effect of bathymetric aids also depends on the priors - how localization information is known before measurements. To be specific, the effect of bathymetric aids depends on how the bathymetry matching helps in improving the prior knowledge of localization. Figure~\ref{fig:dGaussianAll}) shows the conditional entropy maps with different Gaussian priors (plots on the right for each row). For a Gaussian prior, it is good to have more bathymetry variation in the direction of larger uncertainty. For example in the first row of Figure~\ref{fig:dGaussianAll}, Gaussian prior has more uncertainty in the north-south direction, and therefore bathymetry valleys in east west direction give smaller entropy value. A simple extreme case is when an AUV goes along a straight bathymetry valley (V-shape). The lowest point along the path has the same water depth. The valley is steep and therefore the bathymetry variation at the vehicle's left and right sides is high; the high variation bounds the localization error at the two sides. However, the measured water depth along the path does not change (zero variation), and the localization uncertainty in heading directions keeps increasing as every point along the path has the same bathymetry topology around it.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{Figures/dGaussinAll.png}
+\caption{Information entropy map based on different Gaussian priors: It is good to have more bathymetry variation in the direction where the larger uncertainty of the Gaussian prior lies.}
+\label{fig:dGaussianAll}
+\end{figure}
+
+\section{Summary}
+
+We described the localization with bathymetric aids. Nonparametric filters show that localization distribution with bathymetry measurements is neither Gaussian nor uniform. In terms of computational load, accuracy, empirical convergence and sensitivity to various factors, Particle filter (PF) turns to be the best: it handles multimodal ambiguities, and is not computationally heavy as long as the number of particles is large enough for description of the localization.
+
+Based on particle filters, we formulated PF-based entropy - an information theoretical approach to quantify the localization uncertainty. We built information entropy map to analyze how bathymetry maps benefit localization.

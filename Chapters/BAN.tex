@@ -1,0 +1,245 @@
+\chapter{Navigation with Bathymetric Aids}
+\label{ch:ban}
+\lhead{Chapter~\ref{ch:ban}. \emph{Navigation with Bathymetric Aids}}
+
+\section{Problem Formulation}
+
+Chapter~\ref{ch:bathymetry} has shown with examples, that the localization accuracy strongly depends on the path that an AUV takes, if the AUV uses bathymetric aids for navigation. So how does one select a path that yields good localization? Given a starting point and a destination, we define our problem as how to plan a path such that the localization uncertainty is minimized when vehicle reaches the destination.
+
+The optimal path is found using approximate dynamic programming (ADP) introduced in Section~\ref{sec:adp}. The Q-function of the ADP is obtained by a cycle of reinforcement learning in Section~\ref{sec:IPPA}. The state value of the ADP is obtained by Gaussian process regression (GPR) in Section~\ref{sec:GPR}. The paths generated are evaluated in Section~\ref{sec:simulation}. Summary is made in the last.
+
+The work in this chapter and Chapter~\ref{ch:bathymetry} was published in \cite{Gao2018}.
+
+
+\section{Approximate Dynamic Programming}
+\label{sec:adp}
+Rather than appeal to heuristics (bathymetry variation, terrain dispersion, roughness, etc.), we pose the path planning as an optimization problem and solve it by breaking the problem down into a collection of simpler subproblems. This is the concept of dynamic programming. Due to the problem of continuous state domain and ``curse of dimensionality'', we approximate the state value and optimize the path in the framework of reinforcement learning and Gaussian progress regression.
+
+We define the state $S$ as the positions of particles in a particle filter, that is, $S_k=\{{\bf x}_k^i,q_k^i\}$. For simplicity, particles are resampled to have the same weights. Therefore the state space consists of the positions of all particles. Given a starting point and a destination, the path is planned with policy $\pi(S_k)$The policy which contains a series of actions $\pi(S_k)={a_k,a_{k+1},a_{k+2},\ldots}$. The policy is chosen such that the localization uncertainty is minimized when vehicle reaches the destination. It is formulated as,
+\begin{equation}
+\label{eq:Bellman}
+\begin{aligned}
+\pi(S_k)&\leftarrow\arg\min_{a\in{\mathcal{A}}(S_k)}Q(S_k,a_k) \\
+%V^*(S)&=\min_{a\in\mathcal{A}}Q^*(S,a), \\
+Q(S_k,a_k)&=\sum_{S_{k+1}}p_{\text{tr}}(S_k\xrightarrow{a_k}S_{k+1})V(S_{k+1}) \\
+V(S_k)&=\min_{a_k\in{\mathcal{A}}(S_k)}Q(S_k,a_k)\\
+\end{aligned}
+\end{equation}
+where $V(\cdot)$ is the value function of a state. $p_\text{tr}(S_k\xrightarrow{a_k}S_{k+1})$ is the transition probability from state $S_k$ to state $S_{k+1}$, due to the non-deterministic evolution of vehicle position by taking action $a_k$. This planning formulation is essentially an optimization problem. Compared to standard Bellman's equation~\cite{ADP-book}, the transition reward is zero and the discount factor is $1$. Therefore, the value of any given state $S$ is the entropy value of state at the destination. In other words, given an optimal path, all states along the same path have the same entropy value.
+
+In the subsequent sections, transition probability $p_{\text{tr}}(S_k\xrightarrow{a_k}S_{k+1})$ is set to 1 during path planning. This is because the performance evaluation of the algorithm is run over Monte Carlo simulations to include the non-deterministic evolution of vehicle position.
+
+Equation~\eqref{eq:Bellman} suffers from ``the curse of dimensionality''. The state space depends on the number of particles and the action is in a continuous domain. It is not possible to use dynamic programming to solve the sequential decision process problem. We resort to the techniques of approximate dynamic programming (ADP) in \cite{ADP-book} and solve the optimization problem using reinforcement learning and Gaussian process regression (GPR).  
+Q-function~\cite{RL-book} $Q(\cdot)$ across all possible actions is obtained by a cycle of reinforcement learning - policy generation and evaluation.
+
+\section{Iterative Path Planning Algorithm}
+\label{sec:IPPA}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{flowchart.png}
+\caption{Flowchart of iterative path planning algorithm.}
+\label{fig:flowchart}
+\end{figure}
+
+Figure~\ref{fig:flowchart} shows the flowchart of the iterative path planning algorithm. Each iteration consists of two major steps - policy generation and policy evaluation. Every time a path is generated, localization along the path is simulated to enforce the learning of the path values.
+
+The algorithm starts with randomly generated paths, given the starting point and destination. The localization along the paths is simulated to get the estimated values $V^*(S)$. A state-value table is constructed with each entry recording a state $S$ and corresponding value $V^*(S)$. In each iteration, the policy is generated according to the estimated state value from the table. At the end of each iteration, a path is generated and is then evaluated from simulation. New state-value entries are used to update the state-value table. The state-value table is refined over iterations.
+
+\subsection{Policy Generation}
+
+\begin{figure}[htpb]
+\begin{center}
+\subfigure[Given any state $S_k$, an action space is generated.]{
+  \includegraphics[width=.8\linewidth]{Figures/PresentationPP1.png}
+  \label{subfig:policygeneration1}
+}
+\subfigure[A zoom-in plot of the action space and resulting state.]{
+  \includegraphics[width=.8\linewidth]{Figures/PresentationPP2.png}
+  \label{subfig:policygeneration2}
+}
+\caption{Action space for policy generation: The next waypoints from action set include all possible map grids when looking at the destination.}
+\label{fig:policygeneration}
+\end{center}
+\end{figure}
+
+Given any state $S_k$, we approximate the continuous space using a discrete system. We form an action space $\mathcal{A}(a_k)$ containing all possible actions. The possible actions are the headings linearly spaced within $(-\frac{\pi}{4},\frac{\pi}{4})$ when vehicle heads towards the destination (Figure~\ref{subfig:policygeneration1}). To cover all the bathymetry grids, the resulting positions after $\tau=100$ time steps need to be roughly $10$ meters apart from each other. Therefore, there are approximately 29 actions in the action space. 
+
+A resulting state is generated for each action such that $(S_k,a_k)\rightarrow S_{k+1}$ (Figure~\ref{subfig:policygeneration2}). The state value $V(S_{k+1})$ is estimated using Gaussian process regression (GPR)~\cite{GPR}. We will explain the detailed GPR in the next section. The policy is updated with the action that leads to the next state with minimum value. If the current position is within $\tau$-step moves to the destination, we navigate the vehicle to the destination and the path planning is completed.
+
+\subsection{Policy Evaluation}
+After the path is generated, we evaluate the path by simulating the localization along the planned path. The navigation follows waypoints generated along the path at $\tau$ time steps apart. To follow the waypoints, the vehicle compares its estimated position with the targeted waypoint, and generates control and command accordingly. The details of path execution are presented in Section~\ref{sec:simulation}. The states along the path have the same value as the state when vehicle reaches the destination. The path is evaluated at the median value over Monte Carlo simulations. This minimizes the discretization error due to the limited number of particles. The new state-value entries are added to the state-value table if their values are smaller than the values of the nearby states. We also remove the nearby states with large values. Instead of conventional Euclidean distance, the distance between state is evaluated using Bhattacharyya Coefficient \cite{Comaniciu2000} and is explained in details in Section~\ref{sec:GPR}.
+
+\subsection{The Policy Iteration Algorithm}
+The algorithm is summarized below: \\
+
+\begin{algorithm}
+\caption{Policy iteration}
+Randomly generate a number of paths (e.g. 500) and construct the state-value table %$V^*(S)$
+
+\Repeat{Stabilized}{
+  \Statex Start from starting point
+
+     \While{The destination is not reached}{
+        Generate action space
+
+       \For{each action in the action space}
+          {Estimate the value based on state-value table}
+        \endfor
+        Choose the action with the minimum value and move
+      }
+      Re-evaluate the value of the generated path
+
+      Update the state-value table
+  }
+\end{algorithm}
+
+It should be noted that this path planning algorithm plans path offline to generate the state-value table. When AUV executes the path, a new planned path can be generated if AUV detects itself away from the planned path or carrying a new state in the localization filter. The refined state-value table is used to generate the path. However, if the state or estimated position is far away from the ones recorded in the state-value table, the iterative path planning has to start over to optimize the state-value table.
+
+\section{Gaussian Process Regression for Path Planning}
+\label{sec:GPR}
+In the section of policy generation, the value function $V(S)$ (the time step subscript is dropped for simplicity of notation) of a state $S$ is modeled as a Gaussian process. The reason is that we only have limited number of available data (the state-value table) to estimate the continuous value in the high-dimensional state space (The state is in dimension of $2\times 6000$ where $6000$ is the number of the particles). Therefore we perceive the states with jointly Gaussian distribution, and infer the state value in a continuous space with a Gaussian process prior. 
+
+To estimate $V(S)$, we choose some nearby states with smaller values. For example, we only use the nearby states whose values are below the 75$^\text{th}$ percentile. This is because we know that the available value of the states in the state-value table is larger than the optimal value as the paths are not optimal. We purposely remove some state-value entries as it is obviously not the optimal one. Let the chosen states and their values be $\mathcal{D}=\{(T_i,v_{T,i})\}$. The value function $V(\cdot)$ can be inferred using Bayes Theorem:
+\begin{equation}
+    p(V(\cdot)|\mathcal{D})=\frac{p(V(\cdot))p(\mathcal{D}|V(\cdot))}{p(\mathcal{D})}.
+\end{equation}
+The values are observations on the value function $V(T)$, which is a Gaussian process (GP). We have
+\begin{equation}
+    \begin{aligned}
+    v_{T,i}&=V(T_i)+\epsilon_i \\
+    V&\thicksim \textbf{GP}(\cdot|0, {\bf K}) \\
+    \epsilon_i&\thicksim\mathcal(N)(\cdot|0,\sigma^2).
+    \end{aligned}
+\end{equation}
+$\bf K$ is kernel function defined by the covariance of the states. The prior on $V(\cdot)$ is a GP and likelihood is Gaussian. Therefore the posterior on $V(\cdot)$ is also a GP. We can make predictions on new state $S$
+\begin{equation}
+    p(v_S|S, \mathcal{D})=\int p(v_S|S,V(\cdot),\mathcal{D})p(V(\cdot)|\mathcal{D})dV(\cdot).
+\end{equation}
+
+Figure~\ref{fig:GPRdemo} illustrates GPR state estimation in an 1-dimensional example. The value is to be estimated at the location indicated by the vertical blue line. The red dash-dot line is the optimal value to be estimated. Initialization generates paths with state values larger than value of the optimal path. Therefore, nearby states with smaller values are used to estimate the state value. The state value is estimated as shown by the blue curve.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.9\textwidth]{Figures/GPRdemo.png}
+\caption{Illustration of Gaussian process regression in 1-dimensional space.}
+\label{fig:GPRdemo}
+\end{figure}
+
+The distance between states in the illustration (Figure~\ref{fig:GPRdemo}) is simply the distance in the x-axis. In our path planning problem, the state variable consists of positions of all particles. The state space is much larger. We cannot simply use a Euclidean distance to measure the similarity between states. To evaluate the distance between states $S$ and $T$, the Bhattacharyya Coefficient $\rho(S,T)$~\cite{Comaniciu2000} is used. Bhattacharyya Coefficient $\rho(S,T)$ measures the level of overlapping between two distributions and therefore is suitable to describe the similarity of the states (sets of particles). Let the discrete densities of particle sets $S$ and $T$ be $\{\hat{s}_u\}_{u=1,...m}$ and $\{\hat{t}_u\}_{u=1,...m}$ respectively, where $m$ is the number of bins and $\sum_{u=1}^m\hat{s}_u=1,\sum_{t=1}^m\hat{s}_u=1$. We have $\rho(S,T)=\sum_{u=1}^m\sqrt{\hat{s}_u\hat{t}_u}$. The distance $\mathcal{B}(S,T)$ between state $S$ and state $T$ is
+\begin{equation}
+\mathcal{B}(S,T)=\sqrt{1-\rho(S,T)}.
+\end{equation}
+
+\section{Simulation and Performance}
+\label{sec:simulation}
+
+\subsection{Underwater Vehicle Navigation}
+Navigation is the activity of ascertaining one's position, planning and following a route. To evaluate how the path planning benefits localization, the vehicle needs to follow the planned path. A series of waypoints are sampled from the planned path, with the destination as the last waypoint. The vehicle compares its estimated position $\bf{\hat x}_k$ with the targeted waypoint, and gives an action that directs the vehicle to head towards the targeted waypoint. We set a 10-meter range to determine whether vehicle has reached the waypoint. Once $\bf{\hat x}_k$ is within $10$ meters of the waypoint, the vehicle changes to target the subsequent waypoint. If the vehicle reaches a later waypoint before the current one, it continues to follow the next waypoint. The mission ends when vehicle reaches the destination (within a $10$-meter range) or the mission exceeds the maximum allowable duration.
+
+Our bathymetry map has a resolution of $10$ meters. The vehicle makes a measurement at every $10$ seconds when moving at $1$ meter per second.
+
+\subsection{Mission 1}
+
+\begin{figure}[htbp]
+\centering
+\subfigure[Iteration 1]{
+\includegraphics[width=0.5\linewidth]{M1P1.png}
+\label{subfig:M1P1}
+}
+\hfil
+\subfigure[Iteration 2]{
+\includegraphics[width=0.5\linewidth]{M1P2.png}
+\label{subfig:M1P2}
+}
+\hfil
+\subfigure[Iteration 3]{
+\includegraphics[width=0.5\linewidth]{M1P3.png}
+\label{subfig:M1P3}
+}
+\caption{Mission 1: As the algorithm iterates, the planned path evolves to one with more bathymetric variation.}
+\label{fig:M1allpaths}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\subfigure[PF-based entropy at the destination: the value drops with iterations, and is also smaller than the entropy of a straight-line path.]{
+\includegraphics[width=0.75\linewidth]{M1entropy.png}
+\label{subfig:M1entropy}
+}
+\hfil
+\subfigure[Estimation error at the destination: the localization error drops with iteration, and is smaller than the error of a straight-line path.]{
+\includegraphics[width=0.75\linewidth]{M1error.png}
+\label{subfig:M1error}
+}
+\caption{Mission 1: Performance at the destination.}
+\label{fig:M1}
+\end{figure}
+
+We tested our algorithm on bathymetry data collected at a test location in Singapore waters. With the starting point (SP) and destination point (DP) being defined, Figure~\ref{fig:M1allpaths} shows that as the algorithm iterates, the planned path evolves to one with more bathymetric variation.
+
+The navigation accuracy is estimated with 50 simulated runs. The entropy at the destination (Figure~\ref{subfig:M1entropy}) drops with iterations, and is smaller compared with the entropy at the end of a straight-line path. The localization errors at the destination are shown in Figure~\ref{subfig:M1error} for straight-line path and generated paths over iterations 1 to 3. With the same propagation and observation capability, routes through more bathymetric variation have better localization accuracy. A good path is generated within a few iterations.
+
+\subsection{Mission 2}
+
+We test another pair of starting and destination points. In contrast to the pair in Mission 1, this pair has a small bathymetric basin (dark blue region) between them. In the first three iterations in Figure~\ref{fig:M2allpaths}, paths are generated along the southwest side of the basin. From the fourth iteration, the generated path starts to move to the other side of the basin, and comes back to the southwest side. The PF-based entropy values and localization errors at the destination drop over iterations and have similar trend (Figure~\ref{fig:M2}). Looking at the bathymetry along the planned path in Figure~\ref{fig:PathBathy}, we can see that paths from later iterations do have larger range in bathymetry along their paths. However Path 4 with largest bathymetry range does not give smallest localization error.
+
+\begin{figure}[htbp]
+\centering
+\subfigure[Iteration 1]{
+\includegraphics[width=0.45\linewidth]{M2P1.png}
+\label{subfig:M2P1}
+}
+\hfil
+\subfigure[Iteration 2]{
+\includegraphics[width=0.45\linewidth]{M2P2.png}
+\label{subfig:M2P2}
+}
+\hfil
+\subfigure[Iteration 3]{
+\includegraphics[width=0.45\linewidth]{M2P3.png}
+\label{subfig:M2P3}
+}
+\hfil
+\subfigure[Iteration 4]{
+\includegraphics[width=0.45\linewidth]{M2P4.png}
+\label{subfig:M2P4}
+}
+\hfil
+\subfigure[Iteration 5]{
+\includegraphics[width=0.45\linewidth]{M2P5.png}
+\label{subfig:M2P5}
+}
+\hfil
+\subfigure[Iteration 6]{
+\includegraphics[width=0.45\linewidth]{M2P6.png}
+\label{subfig:M2P6}
+}
+\caption{Mission 2: In the first three iterations, planned path evolves to one side of the bathymetry basin. From the fourth iteration, the planned path evolves to the other side of the basin.}
+\label{fig:M2allpaths}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\subfigure[PF-based entropy at the destination: The paths following the basin edge with more bathymetric variation do not yield smallest entropy values. Entropy values drops over iterations.]{
+\includegraphics[width=0.75\linewidth]{M2entropy.png}
+\label{subfig:M2entropy}
+}
+\hfil
+\subfigure[Estimation error at the destination: The localization errors drops over iterations. However the bathymetric variations along paths over iterations do not increase.]{
+\includegraphics[width=0.75\linewidth]{M2error.png}
+\label{subfig:M2error}
+}
+\caption{Mission 2: Performance at the destination.}
+\label{fig:M2}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.9\textwidth]{Figures/PathBathy.png}
+\caption{Illustration of Gaussian process regression in 1-dimensional space.}
+\label{fig:PathBathy}
+\end{figure}
+
+\section{Summary} 
+
+With the particle filter based entropy and the information entropy introduced in Chapter~\ref{ch:bathymetry}, we presented a path planning algorithm. Given a starting point and destination, the algorithm generates a sub-optimal path offline, such that the localization accuracy is maximized when vehicle reaches the destination. We showed that the entropy measure is consistent with the localization performance. It is important to highlight that there are many definitions on the bathymetry variation. It can be the change of bathymetry (single-point water depth) along the path, or the bathymetry range within the path (difference between maximum and minimum water depth). It can also be the local bathymetry variation (over some area) along the path. The last definition needs to define an area size to compute the variation. For any of the definitions, paths along maximum bathymetric variation may not always lead to the smallest positioning error. The bathymetry matching performance depends on the prior knowledge about the location and the exact bathymetry, specifically, how unique the measured bathymetry is compared with the others in the prior. The conditional entropy measure evaluates this performance and shows consistent trend with the localization performance. Path planning with the information entropy measure could be extended to other planning problem and eventually cooperative localization of small team of AUVs.
